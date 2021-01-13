@@ -1,0 +1,4 @@
+scrapy startproject quotes_crawler
+cd quotes_crawler
+scrapy genspider quotes_fjp quotes.toscrape.com
+scrapy crawl quotes_fjp
