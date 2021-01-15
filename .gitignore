@@ -122,3 +122,6 @@ qr_code.png
 # jupyter
 .ipynb_checkpoints
 /test/
+
+#tf
+tensorflow_learn/tf_keras_classification_model/callbacks/
