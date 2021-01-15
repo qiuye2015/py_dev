@@ -90,10 +90,21 @@ class_name = ['T-shirt', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal', 'Shir
 # model.add(keras.layers.Dense(10, activation='softmax'))
 
 
+# model = keras.models.Sequential()
+# model.add(keras.layers.Flatten(input_shape=[28, 28]))
+# for _ in range(20):
+#     model.add(keras.layers.Dense(100, activation='selu'))  # selu自带归一会功能激活函数
+# model.add(keras.layers.Dense(10, activation='softmax'))
+
+
 model = keras.models.Sequential()
 model.add(keras.layers.Flatten(input_shape=[28, 28]))
 for _ in range(20):
     model.add(keras.layers.Dense(100, activation='selu'))  # selu自带归一会功能激活函数
+# 一般只在最后几层添加dropout
+# AlphaDropout: 1. 均值和方差不变  2. 归一化性质不变
+model.add(keras.layers.AlphaDropout(rate=0.5))  # rate丢掉的单元数目比例
+# model.add(keras.layers.Dropout(rate=0.5))
 model.add(keras.layers.Dense(10, activation='softmax'))
 
 """
@@ -133,3 +144,5 @@ def plot_learn_curves(history):
 
 
 plot_learn_curves(history)  # 不符合预期
+
+print(model.evaluate(x_test, y_test))
