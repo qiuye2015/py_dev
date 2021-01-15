@@ -80,7 +80,14 @@ class_name = ['T-shirt', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal', 'Shir
 model = keras.models.Sequential()
 model.add(keras.layers.Flatten(input_shape=[28, 28]))
 for _ in range(20):
-    model.add(keras.layers.Dense(10, activation='relu'))
+    model.add(keras.layers.Dense(100, activation='relu'))  # 全连接
+    model.add(keras.layers.BatchNormalization())  # 增加批归一化
+
+    """另外实现方式(争议点) 批归一会放在激活函数之前
+    model.add(keras.layers.Dense(100))
+    model.add(keras.layers.BatchNormalization()) 
+    model.add(keras.layers.Activation('relu'))
+    """
 model.add(keras.layers.Dense(10, activation='softmax'))
 """
 relu： y = max(0,x)
@@ -118,6 +125,6 @@ def plot_learn_curves(history):
     plt.show()
 
 
-# plot_learn_curves(history)  # 不符合预期
+plot_learn_curves(history)  # 不符合预期
 
-print(model.evaluate(x_test_scaled, y_test))
+
