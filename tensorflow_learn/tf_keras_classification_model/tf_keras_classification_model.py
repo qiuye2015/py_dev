@@ -69,12 +69,19 @@ def show_imgs(n_rows, n_cols, x_data, y_data, class_names):
 class_name = ['T-shirt', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
 # show_imgs(3, 5, x_train, y_train, class_name)
 
-model = keras.models.Sequential([
-    keras.layers.Flatten(input_shape=[28, 28]),
-    keras.layers.Dense(300, activation='relu'),
-    keras.layers.Dense(100, activation='relu'),
-    keras.layers.Dense(10, activation='softmax')
-])
+# model = keras.models.Sequential([
+#     keras.layers.Flatten(input_shape=[28, 28]),
+#     keras.layers.Dense(300, activation='relu'),
+#     keras.layers.Dense(100, activation='relu'),
+#     keras.layers.Dense(10, activation='softmax')
+# ])
+
+# 改为深度神经网络 DNN
+model = keras.models.Sequential()
+model.add(keras.layers.Flatten(input_shape=[28, 28]))
+for _ in range(20):
+    model.add(keras.layers.Dense(10, activation='relu'))
+model.add(keras.layers.Dense(10, activation='softmax'))
 """
 relu： y = max(0,x)
 softmax: 将向量变成概率分布，x=[x1, x2, x3]
