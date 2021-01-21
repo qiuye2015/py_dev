@@ -39,7 +39,7 @@ x_test_scaled = scaler.transform(x_test)
 #     keras.layers.Dense(1)
 # ])
 
-# 多输入
+# 多输出
 input_wide = keras.layers.Input(shape=[5])
 input_deep = keras.layers.Input(shape=[6])
 
@@ -48,7 +48,9 @@ hidden2 = keras.layers.Dense(30, activation='relu')(hidden1)
 
 concat = keras.layers.concatenate([input_wide, hidden2])
 output = keras.layers.Dense(1)(concat)
-model = keras.models.Model(inputs=[input_wide, input_deep], outputs=[output])
+output2 = keras.layers.Dense(1)(hidden2)
+
+model = keras.models.Model(inputs=[input_wide, input_deep], outputs=[output,output2])
 
 print(model.summary())
 
@@ -65,8 +67,8 @@ x_test_scaled_wide = x_test_scaled[:, :5]
 x_test_scaled_deep = x_test_scaled[:, 2:]
 
 history = model.fit([x_train_scaled_wide, x_train_scaled_deep],
-                    y_train,
-                    validation_data=([x_valid_scaled_wide, x_valid_scaled_deep], y_valid),
+                    [y_train,y_train],
+                    validation_data=([x_valid_scaled_wide, x_valid_scaled_deep], [y_valid,y_valid]),
                     epochs=100,
                     callbacks=callbacks)
 
@@ -80,4 +82,4 @@ def plot_learning_curves(history):
 
 # plot_learning_curves(history)
 
-print(model.evaluate([x_test_scaled_wide, x_test_scaled_deep], y_test))
+print(model.evaluate([x_test_scaled_wide, x_test_scaled_deep], [y_test,y_test]))
