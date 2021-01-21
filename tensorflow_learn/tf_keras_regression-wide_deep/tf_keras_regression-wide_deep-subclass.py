@@ -35,14 +35,30 @@ x_train_scaler = scaler.fit_transform(x_train)
 x_valid_scaler = scaler.transform(x_valid)
 x_testscaler = scaler.transform(x_test)
 
-# 函数式API
-input = keras.layers.Input(shape=x_train.shape[1:])
-hidden1 = keras.layers.Dense(30, activation='relu')(input)
-hidden2 = keras.layers.Dense(30, activation='relu')(hidden1)
 
-concat = keras.layers.concatenate([input, hidden2])
-output = keras.layers.Dense(1)(concat)
-model = keras.models.Model(inputs=[input], outputs=[output])
+# 子类API
+class WideDeepModel(keras.models.Model):
+    def __init__(self):
+        super(WideDeepModel, self).__init__()
+        """定义模型层次"""
+        self.hidden1_layer = keras.layers.Dense(30, activation='relu')
+        self.hidden2_layer = keras.layers.Dense(30, activation='relu')
+        self.output_layer = keras.layers.Dense(1)
+
+    def call(self, input):
+        """完成模型的正向计算"""
+        hidden1 = self.hidden1_layer(input)
+        hidden2 = self.hidden2_layer(hidden1)
+        concat = keras.layers.concatenate([input, hidden2])
+        output = self.output_layer(concat)
+        return output
+
+
+# model = WideDeepModel()
+model = keras.models.Sequential([
+    WideDeepModel(),
+])
+model.build(input_shape=(None, 8))
 
 print(model.summary())
 
@@ -61,4 +77,4 @@ def plot_learning_curves(history):
 
 print(model.evaluate(x_test, y_test))
 
-plot_learning_curves(history)
+# plot_learning_curves(history)
