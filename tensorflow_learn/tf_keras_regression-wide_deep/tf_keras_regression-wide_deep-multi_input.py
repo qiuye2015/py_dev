@@ -30,29 +30,44 @@ print(x_test.shape, y_test.shape)
 from sklearn.preprocessing import StandardScaler
 
 scaler = StandardScaler()
-x_train_scaler = scaler.fit_transform(x_train)
-x_valid_scaler = scaler.transform(x_valid)
-x_testscaler = scaler.transform(x_test)
+x_train_scaled = scaler.fit_transform(x_train)
+x_valid_scaled = scaler.transform(x_valid)
+x_test_scaled = scaler.transform(x_test)
 
 # model = keras.models.Sequential([
 #     keras.layers.Dense(30, activation='relu', input_shape=x_train.shape[1:]),
 #     keras.layers.Dense(1)
 # ])
 
-# 函数式API
-input = keras.layers.Input(shape=x_train.shape[1:])
-hidden1 = keras.layers.Dense(30, activation='relu')(input)
+# 多输入
+input_wide = keras.layers.Input(shape=[5])
+input_deep = keras.layers.Input(shape=[6])
+
+hidden1 = keras.layers.Dense(30, activation='relu')(input_deep)
 hidden2 = keras.layers.Dense(30, activation='relu')(hidden1)
 
-concat = keras.layers.concatenate([input, hidden2])
+concat = keras.layers.concatenate([input_wide, hidden2])
 output = keras.layers.Dense(1)(concat)
-model = keras.models.Model(inputs=[input], outputs=[output])
+model = keras.models.Model(inputs=[input_wide, input_deep], outputs=[output])
 
 print(model.summary())
 
 model.compile(loss="mean_squared_error", optimizer="sgd")
 callbacks = [keras.callbacks.EarlyStopping(patience=5, min_delta=1e-2)]
-history = model.fit(x_train_scaler, y_train, validation_data=(x_valid_scaler, y_valid), epochs=100,
+
+x_train_scaled_wide = x_train_scaled[:, :5]  # 前5个
+x_train_scaled_deep = x_train_scaled[:, 2:]  # 后6个
+
+x_valid_scaled_wide = x_valid_scaled[:, :5]
+x_valid_scaled_deep = x_valid_scaled[:, 2:]
+
+x_test_scaled_wide = x_test_scaled[:, :5]
+x_test_scaled_deep = x_test_scaled[:, 2:]
+
+history = model.fit([x_train_scaled_wide, x_train_scaled_deep],
+                    y_train,
+                    validation_data=([x_valid_scaled_wide, x_valid_scaled_deep], y_valid),
+                    epochs=100,
                     callbacks=callbacks)
 
 
@@ -65,4 +80,4 @@ def plot_learning_curves(history):
 
 # plot_learning_curves(history)
 
-print(model.evaluate(x_test, y_test))
+print(model.evaluate([x_test_scaled_wide, x_test_scaled_deep], y_test))
