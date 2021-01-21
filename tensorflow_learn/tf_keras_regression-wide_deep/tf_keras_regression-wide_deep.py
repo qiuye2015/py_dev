@@ -18,13 +18,6 @@ print("*" * 50)
 from sklearn.datasets import fetch_california_housing
 
 housing = fetch_california_housing()
-# print(housing.DESCR)
-# print(housing.data.shape)
-# print(housing.target.shape)
-#
-# import pprint
-# pprint.pprint(housing.data[:5])
-# pprint.pprint(housing.target[:5])
 
 from sklearn.model_selection import train_test_split
 
@@ -41,10 +34,19 @@ x_train_scaler = scaler.fit_transform(x_train)
 x_valid_scaler = scaler.transform(x_valid)
 x_testscaler = scaler.transform(x_test)
 
-model = keras.models.Sequential([
-    keras.layers.Dense(30, activation='relu', input_shape=x_train.shape[1:]),
-    keras.layers.Dense(1)
-])
+# model = keras.models.Sequential([
+#     keras.layers.Dense(30, activation='relu', input_shape=x_train.shape[1:]),
+#     keras.layers.Dense(1)
+# ])
+
+# 函数式API
+input = keras.layers.Input(shape=x_train.shape[1:])
+hidden1 = keras.layers.Dense(30, activation='relu')(input)
+hidden2 = keras.layers.Dense(30, activation='relu')(hidden1)
+
+concat = keras.layers.concatenate([input, hidden2])
+output = keras.layers.Dense(1)(concat)
+model = keras.models.Model(inputs=[input], outputs=[output])
 
 print(model.summary())
 
