@@ -41,17 +41,54 @@ x_train_scaled = scaler.fit_transform(x_train)
 x_valid_scaled = scaler.transform(x_valid)
 x_test_scaled = scaler.transform(x_test)
 
-model = keras.models.Sequential([
-    keras.layers.Dense(30, activation='relu', input_shape=x_train.shape[1:]),
-    keras.layers.Dense(1)
-])
 
-print(model.summary())
+# RandomizedSearchCV
+# 1. 转化为sklean的model
+# 2. 定义参数集合
+# 3. 搜索参数
 
-model.compile(loss="mean_squared_error", optimizer="sgd")
+def build_model(hidden_layers=1,
+                layer_size=30,
+                learning_rate=3e-3):
+    model = keras.models.Sequential()
+    model.add(keras.layers.Dense(layer_size, activation='relu', input_shape=x_train.shape[1:]))
+    for _ in range(hidden_layers - 1):
+        model.add(keras.layers.Dense(layer_size, activation='relu'))
+    model.add(keras.layers.Dense(1))
+    optimizer = keras.optimizers.SGD(learning_rate)
+    model.compile(loss='mse', optimizer=optimizer)
+    return model
+
+
+sklearn_model = keras.wrappers.scikit_learn.KerasRegressor(build_model)
 callbacks = [keras.callbacks.EarlyStopping(patience=5, min_delta=1e-2)]
-history = model.fit(x_train_scaled, y_train, validation_data=(x_valid_scaled, y_valid), epochs=100,
-                    callbacks=callbacks)
+# history = sklearn_model.fit(x_train_scaled, y_train, epochs=100,
+#                             validation_data=(x_valid_scaled, y_valid),
+#                             callbacks=callbacks)
+
+from scipy.stats import reciprocal
+
+# f(x) = 1/(x * log(b/a)) a<=x<=b
+param_distribution = {
+    "hidden_layers": [1, 2, 3, 4],
+    "layer_size": np.arange(1, 100),
+    "learning_rate": reciprocal(1e-4, 1e-2)
+}
+from sklearn.model_selection import RandomizedSearchCV
+
+random_searach_cv = RandomizedSearchCV(sklearn_model, param_distribution,
+                                       n_iter=10,
+                                       n_jobs=1)
+random_searach_cv.fit(x_train_scaled, y_train, epochs=100,
+                      validation_data=(x_valid_scaled, y_valid),
+                      callbacks=callbacks)
+
+print(random_searach_cv.best_params_)
+print(random_searach_cv.best_score_)
+print(random_searach_cv.best_estimator_)
+
+model = random_searach_cv.best_estimator_.model()
+print(model.evaluate(x_test_scaled, y_test))
 
 
 def plot_learning_curves(history):
@@ -61,6 +98,4 @@ def plot_learning_curves(history):
     plt.show()
 
 
-plot_learning_curves(history)
-
-# print(model.evaluate(x_test, y_test))
+# plot_learning_curves(history)
