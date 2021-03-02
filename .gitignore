@@ -124,4 +124,4 @@ qr_code.png
 /test/
 
 #tf
-tensorflow_learn/tf_keras_classification_model/callbacks/
+**/callbacks/**
