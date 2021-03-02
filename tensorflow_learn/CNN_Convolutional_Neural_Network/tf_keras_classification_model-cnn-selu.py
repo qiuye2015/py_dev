@@ -44,36 +44,36 @@ model = keras.models.Sequential()
 ### 卷积层
 model.add(keras.layers.Conv2D(filters=32, kernel_size=3,
                               padding='same',
-                              activation='relu',
+                              activation='selu',
                               input_shape=(28, 28, 1)))
 ### 卷积层
 model.add(keras.layers.Conv2D(filters=32, kernel_size=3,
                               padding='same',
-                              activation='relu'))
+                              activation='selu'))
 ### 池化层
 model.add(keras.layers.MaxPool2D(pool_size=2))
 ## 2
 model.add(keras.layers.Conv2D(filters=64, kernel_size=3,
                               padding='same',
-                              activation='relu'))
+                              activation='selu'))
 model.add(keras.layers.Conv2D(filters=64, kernel_size=3,
                               padding='same',
-                              activation='relu'))
+                              activation='selu'))
 model.add(keras.layers.MaxPool2D(pool_size=2))
 ## 3
 model.add(keras.layers.Conv2D(filters=128, kernel_size=3,
                               padding='same',
-                              activation='relu'))
+                              activation='selu'))
 model.add(keras.layers.Conv2D(filters=128, kernel_size=3,
                               padding='same',
-                              activation='relu'))
+                              activation='selu'))
 model.add(keras.layers.MaxPool2D(pool_size=2))
 
 #
 ### 展平
 model.add(keras.layers.Flatten())
 ### 全连接层
-model.add(keras.layers.Dense(128, activation='relu'))
+model.add(keras.layers.Dense(128, activation='selu'))
 model.add(keras.layers.Dense(10, activation='softmax'))
 #
 model.compile(loss="sparse_categorical_crossentropy", optimizer="sgd", metrics=["accuracy"])

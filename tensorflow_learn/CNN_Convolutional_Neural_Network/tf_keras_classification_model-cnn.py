@@ -24,30 +24,60 @@ print(x_train_all.shape, y_train_all.shape)
 print(x_test.shape, y_test.shape)
 print(x_valid.shape, y_valid.shape)
 print(x_train.shape, y_train.shape)
-
-print(np.max(x_train), np.min(x_train))
 ############################ 归一化 #############################
 from sklearn.preprocessing import StandardScaler
 
 scaler = StandardScaler()
 
 x_train_scaled = scaler.fit_transform(
-    x_train.astype(np.float32).reshape(-1, 1)).reshape(-1, 28, 28)
+    x_train.astype(np.float32).reshape(-1, 1)).reshape(-1, 28, 28, 1)
 x_valid_scaled = scaler.transform(
-    x_valid.astype(np.float32).reshape(-1, 1)).reshape(-1, 28, 28)
+    x_valid.astype(np.float32).reshape(-1, 1)).reshape(-1, 28, 28, 1)
 x_test_scaled = scaler.transform(
-    x_test.astype(np.float32).reshape(-1, 1)).reshape(-1, 28, 28)
-print(np.max(x_train_scaled), np.min(x_train_scaled))
+    x_test.astype(np.float32).reshape(-1, 1)).reshape(-1, 28, 28, 1)
+# print(np.max(x_train_scaled), np.min(x_train_scaled))
 
 ################################################################
 model = keras.models.Sequential()
-model.add(keras.layers.Flatten(input_shape=[28, 28]))
-for _ in range(20):
-    model.add(keras.layers.Dense(100, activation='selu'))  # selu自带归一会功能激活函数
+#
+## 1
+### 卷积层
+model.add(keras.layers.Conv2D(filters=32, kernel_size=3,
+                              padding='same',
+                              activation='relu',
+                              input_shape=(28, 28, 1)))
+### 卷积层
+model.add(keras.layers.Conv2D(filters=32, kernel_size=3,
+                              padding='same',
+                              activation='relu'))
+### 池化层
+model.add(keras.layers.MaxPool2D(pool_size=2))
+## 2
+model.add(keras.layers.Conv2D(filters=64, kernel_size=3,
+                              padding='same',
+                              activation='relu'))
+model.add(keras.layers.Conv2D(filters=64, kernel_size=3,
+                              padding='same',
+                              activation='relu'))
+model.add(keras.layers.MaxPool2D(pool_size=2))
+## 3
+model.add(keras.layers.Conv2D(filters=128, kernel_size=3,
+                              padding='same',
+                              activation='relu'))
+model.add(keras.layers.Conv2D(filters=128, kernel_size=3,
+                              padding='same',
+                              activation='relu'))
+model.add(keras.layers.MaxPool2D(pool_size=2))
+
+#
+### 展平
+model.add(keras.layers.Flatten())
+### 全连接层
+model.add(keras.layers.Dense(128, activation='relu'))
 model.add(keras.layers.Dense(10, activation='softmax'))
-
+#
 model.compile(loss="sparse_categorical_crossentropy", optimizer="sgd", metrics=["accuracy"])
-
+#
 print(model.summary())
 
 ################################################################
@@ -61,11 +91,10 @@ callbacks = [
     keras.callbacks.EarlyStopping(patience=5, min_delta=1e-3)
 ]
 # bash : tensorboard --logdir=callbacks
-history = model.fit(x_train_scaled, y_train, epochs=10,
+history = model.fit(x_train_scaled, y_train, epochs=1,
                     validation_data=(x_valid_scaled, y_valid),
                     callbacks=callbacks)
-
-print(history.history)
+print(model.evaluate(x_test_scaled, y_test))
 
 
 def plot_learn_curves(history):
@@ -74,6 +103,6 @@ def plot_learn_curves(history):
     plt.gca().set_ylim(0, 1)
     plt.show()
 
-plot_learn_curves(history)  # 不符合预期
 
-print(model.evaluate(x_test, y_test))
+print(history.history)
+plot_learn_curves(history)  # 不符合预期
