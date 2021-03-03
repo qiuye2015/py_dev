@@ -38,6 +38,7 @@ x_test_scaled = scaler.transform(
 # print(np.max(x_train_scaled), np.min(x_train_scaled))
 
 ################################################################
+# 可分离卷积神经网络
 model = keras.models.Sequential()
 ## 1
 ### 卷积层
@@ -46,24 +47,24 @@ model.add(keras.layers.Conv2D(filters=32, kernel_size=3,
                               activation='selu',
                               input_shape=(28, 28, 1)))
 ### 卷积层
-model.add(keras.layers.Conv2D(filters=32, kernel_size=3,
+model.add(keras.layers.SeparableConv2D(filters=32, kernel_size=3,
                               padding='same',
                               activation='selu'))
 ### 池化层
 model.add(keras.layers.MaxPool2D(pool_size=2))
 ## 2
-model.add(keras.layers.Conv2D(filters=64, kernel_size=3,
+model.add(keras.layers.SeparableConv2D(filters=64, kernel_size=3,
                               padding='same',
                               activation='selu'))
-model.add(keras.layers.Conv2D(filters=64, kernel_size=3,
+model.add(keras.layers.SeparableConv2D(filters=64, kernel_size=3,
                               padding='same',
                               activation='selu'))
 model.add(keras.layers.MaxPool2D(pool_size=2))
 ## 3
-model.add(keras.layers.Conv2D(filters=128, kernel_size=3,
+model.add(keras.layers.SeparableConv2D(filters=128, kernel_size=3,
                               padding='same',
                               activation='selu'))
-model.add(keras.layers.Conv2D(filters=128, kernel_size=3,
+model.add(keras.layers.SeparableConv2D(filters=128, kernel_size=3,
                               padding='same',
                               activation='selu'))
 model.add(keras.layers.MaxPool2D(pool_size=2))
