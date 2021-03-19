@@ -125,3 +125,4 @@ qr_code.png
 
 #tf
 ./**/callbacks
+tensorflow_learn/PekingUniversity_class/checkpoint/
