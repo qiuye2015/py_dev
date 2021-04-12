@@ -19,7 +19,7 @@ class Mail(object):
     发送邮件
     '''
 
-    def __init__(self, mail_host='mail.dangdang.com', mail_user='',
+    def __init__(self, mail_host='mail.test.com', mail_user='',
                  mail_pass='', port=25):
         self.host = mail_host
         self.port = port
@@ -55,7 +55,7 @@ class Mail(object):
             self.server.sendmail(
                 from_addr, to_list, msg.as_string())
             mail_flag = True
-        except Exception, e:
+        except Exception as e:
             print(e)
         finally:
             self.server.close()
@@ -70,24 +70,24 @@ def gen_recipient_addr(mail_str):
     for email_addr in mail_str.split(','):
         email_addr = email_addr.strip()
         if '@' not in email_addr:
-            email_addr += '@dangdang.com'
+            email_addr += '@test.com'
         mail_lst.append(email_addr)
     return mail_lst
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
 
-    addressor="monitor@10.5.25.150"
-    recipient=gen_recipient_addr("fujianpeng")
-    content="failed"
+    addressor = "monitor@127.0.0.1"
+    recipient = gen_recipient_addr("***")
+    content = "failed"
     priority = HIGH_PRIORITY_MAIL
-    headline="Monitor Process"
+    headline = "Monitor Process"
 
     mailManager = Mail()
-    succ = mailManager.send_mail(addressor, recipient, headline, content, priority)
+    succ = mailManager.send_mail(addressor, recipient,
+                                 headline, content, priority)
 
     if not succ:
         print("Send Mail Failed")
     else:
         print("Send Mail Success")
-
