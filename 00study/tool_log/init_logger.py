@@ -1,7 +1,7 @@
 import os
 import logging
 
-LOG_FILE = 'logs/my.log'
+LOG_FILE = 'logs/applog2.log'
 if not os.path.exists(os.path.dirname(LOG_FILE)):
     os.makedirs(os.path.dirname(LOG_FILE))
 
@@ -22,7 +22,8 @@ class Logger:
         fh.setLevel(level)
         sh = logging.StreamHandler()
         sh.setLevel(level)
-        formatter = logging.Formatter("[%(levelname)-.1s] - %(asctime)s - [%(filename)s:%(lineno)d]: %(message)s")
+        formatter = logging.Formatter(
+            "[%(levelname)-.1s] - %(asctime)s - [%(filename)s:%(lineno)d]: %(message)s")
         fh.setFormatter(formatter)
         sh.setFormatter(formatter)
         self.logger.handlers.clear()
