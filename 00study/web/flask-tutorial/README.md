@@ -32,6 +32,7 @@
 ```
 
 # Install
+
 ```bash
 # Create a virtualenv and activate it:
 python3 -m venv venv
@@ -39,20 +40,30 @@ python3 -m venv venv
 # Install Flaskr:
 pip install -e .
 ```
+
 # Run
+
 ```bash
 flask --app flaskr init-db
 flask --app flaskr --debug run
 ```
+
 # Test
+
 ```bash
 # pip install pytest coverage
 pip install '.[test]'
 pytest
 ```
+
 Run with coverage report:
+
 ```bash
 coverage run -m pytest
 coverage report
 coverage html  # open htmlcov/index.html in a browser
 ```
+
+# from
+
+[参考](https://github.com/pallets/flask/tree/main/examples/tutorial)
