@@ -61,7 +61,7 @@ Run with coverage report:
 ```bash
 coverage run -m pytest
 coverage report
-coverage html  # open htmlcov/index.html in a browser
+coverage html  # open htmlcov/index_now.html in a browser
 ```
 
 # from

@@ -13,7 +13,7 @@ SPIDER_MODULES = ['quotes_crawler.spiders']
 NEWSPIDER_MODULE = 'quotes_crawler.spiders'
 
 
-# Crawl responsibly by identifying yourself (and your website) on the user-agent
+# Crawl responsibly by identifying yourself (and your website) on the todo-agent
 #USER_AGENT = 'quotes_crawler (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules

@@ -1,34 +1,38 @@
 import logging
 import random
 import json
+from copy import copy
 
 
-# from tool_log import logger
-#
-# logger.info("test")
+class Response(object):
+    """
+    workflow3 结果标准返回
+    {
+        request_id: "xxxxxx",
+        result_code: "xxx",
+        data: {}
+    }
+    """
 
-# for x in range(100):
-#     print(random.randint(0, 100))
+    @staticmethod
+    def new_success(request_id, content: dict):
+        return {
+            "request_id": request_id,
+            "result_code": "success",
+            "data": {
+                "context": content
+            }
+        }
+
+    @staticmethod
+    def new_fail(request_id, content: dict):
+        return {
+            "request_id": request_id,
+            "result_code": "fail",
+            "data": {
+                "context": content
+            }
+        }
 
 
-# def now():
-#     print('2022-11-10')
-
-# f = now
-# f()
-# f.__name__
-
-# def log(func):
-#     def wrapper(*args, **kv):
-#         print(f'call {func.__name__}():')
-#         return func(*args, **kv)
-#
-#     return wrapper
-#
-#
-# @log
-# def now():
-#     print('2022-11-10')
-#
-#
-# now()
+print(Response().new_success("12", "45"))

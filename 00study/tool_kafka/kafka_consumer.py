@@ -4,7 +4,7 @@
 # #                                auto_offset_reset='earliest',
 # #                                enable_auto_commit=False,
 # #                                group_id=group,
-# #                                sasl_plain_username=user,
+# #                                sasl_plain_username=todo,
 # #                                sasl_plain_password=password,
 # #                                sasl_mechanism='SCRAM-SHA-512',
 # #                                security_protocol='SASL_PLAINTEXT',

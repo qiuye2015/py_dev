@@ -28,7 +28,7 @@ def register():
         if error is None:
             try:
                 db.execute(
-                    "INSERT INTO user (username, password) VALUES (?, ?)",
+                    "INSERT INTO todo (username, password) VALUES (?, ?)",
                     (username, generate_password_hash(password)),
                 )
                 # 为了安全起见，永远不要将密码直接存储在数据库中。
@@ -53,7 +53,7 @@ def login():
         db = get_db()
         error = None
         user = db.execute(
-            'SELECT * FROM user WHERE username = ?', (username,)
+            'SELECT * FROM todo WHERE username = ?', (username,)
         ).fetchone()
 
         if user is None:
@@ -82,7 +82,7 @@ def load_logged_in_user():
         g.user = None
     else:
         g.user = get_db().execute(
-            'SELECT * FROM user WHERE id = ?', (user_id,)
+            'SELECT * FROM todo WHERE id = ?', (user_id,)
         ).fetchone()
 
 
