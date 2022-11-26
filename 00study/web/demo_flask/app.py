@@ -9,6 +9,7 @@ app = create_app(os.getenv('FLASK_CONFIG') or 'default')
 migrate = Migrate(app, db)
 
 
+# 避免每次启动 shell 会话都要导入数据库实例和模型
 @app.shell_context_processor
 def make_shell_context():
     return dict(db=db, User=User, Role=Role)
