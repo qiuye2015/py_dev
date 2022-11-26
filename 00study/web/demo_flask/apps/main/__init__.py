@@ -9,3 +9,9 @@ main = Blueprint('main', __name__)
 # 所以除非循环引用出现在定义 main 之后，否则会致使导入出错。
 # from . import <some-module>句法表示相对导入,语句中的.表示当前包
 from . import views, errors
+from ..models import Permission
+
+
+@main.app_context_processor
+def inject_permissions():
+    return dict(Permission=Permission)
