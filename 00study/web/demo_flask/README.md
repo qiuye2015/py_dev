@@ -24,12 +24,19 @@ flask db upgrade
 ```
 
 # prepare
+
 ```bash
 #flask shell
 Role.insert_roles()
 from apps import fake
 fake.users(100)
 fake.posts(100)
+```
+
+# test
+
+```bash
+http --json --auth <email>:<password> GET  http://127.0.0.1:5000/api/v1/posts
 ```
 
 # QA
