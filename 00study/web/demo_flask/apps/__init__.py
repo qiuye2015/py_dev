@@ -1,3 +1,5 @@
+from flask_pagedown import PageDown
+
 from config import config
 from flask import Flask
 from flask_bootstrap import Bootstrap
@@ -12,6 +14,7 @@ bootstrap = Bootstrap()
 moment = Moment()
 # 关系型数据库框架
 db = SQLAlchemy()
+pagedown = PageDown()
 mail = Mail()
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
@@ -29,6 +32,7 @@ def create_app(config_name):
     db.init_app(app)
     mail.init_app(app)
     login_manager.init_app(app)
+    pagedown.init_app(app)
 
     # 添加路由和自定义的错误页面
     from apps.todo import todo_bp

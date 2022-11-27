@@ -21,7 +21,15 @@ flask routes
 flask test
 flask db init
 flask db upgrade
+```
 
+# prepare
+```bash
+#flask shell
+Role.insert_roles()
+from apps import fake
+fake.users(100)
+fake.posts(100)
 ```
 
 # QA
