@@ -12,6 +12,9 @@ def forbidden(e):
         return response
     return render_template('403.html'), 403
 
+# 处理 404 和 500 状态码时会遇到点小麻烦，因为这两个错误是由 Flask 自己生成的，而且 一般会返回 HTML 响应。
+# 这很可能会让 API 客户端困惑，因为客户端期望所有响应都是 JSON 格式。
+
 
 @main.app_errorhandler(404)
 def page_not_found(e):
