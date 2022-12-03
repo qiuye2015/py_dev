@@ -1,11 +1,23 @@
 from flask import render_template, flash, redirect, url_for, request, current_app, abort, make_response
 from flask_login import current_user, login_required
+from flask_sqlalchemy import get_debug_queries
 
 from . import main
 from .forms import EditProfileForm, EditProfileAdminForm, PostForm, CommentForm
 from .. import db
 from ..decorators import admin_required, permission_required
 from ..models import User, Role, Permission, Post, Comment
+
+
+@main.after_app_request
+def after_request(response):
+    for query in get_debug_queries():
+        if query.duration >= current_app.config['FLASKY_SLOW_DB_QUERY_TIME']:
+            current_app.logger.warning(
+                'Slow query: %s\nParameters: %s\nDuration: %fs\nContext: %s\n'
+                % (query.statement, query.parameters, query.duration,
+                   query.context))
+    return response
 
 
 @main.route('/shutdown')
@@ -36,9 +48,9 @@ def index():
         query = current_user.followed_posts
     else:
         query = Post.query
-    pagination = query.order_by(Post.timestamp.desc()).paginate(
-        page=page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
-        error_out=False)
+    pagination = query.order_by(Post.timestamp.desc()).paginate(page=page,
+                                                                per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
+                                                                error_out=False)
     posts = pagination.items
     return render_template('index.html', form=form, posts=posts,
                            show_followed=show_followed, pagination=pagination)

@@ -28,11 +28,10 @@ class APITestCase(unittest.TestCase):
             'Content-Type': 'application/json'
         }
 
-        def test_404(self):
-
-            response = self.client.get(
-                '/wrong/url',
-                headers=self.get_api_headers('email', 'password'))
+    def test_404(self):
+        response = self.client.get(
+            '/wrong/url',
+            headers=self.get_api_headers('email', 'password'))
         self.assertEqual(response.status_code, 404)
         json_response = json.loads(response.get_data(as_text=True))
         self.assertEqual(json_response['error'], 'not found')
@@ -139,7 +138,7 @@ class APITestCase(unittest.TestCase):
             headers=self.get_api_headers('john@example.com', 'cat'))
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
-        self.assertEqual('http://localhost' + json_response['url'], url)
+        self.assertEqual(json_response['url'], url)
         self.assertEqual(json_response['body'], 'body of the *blog* post')
         self.assertEqual(json_response['body_html'],
                          '<p>body of the <em>blog</em> post</p>')
@@ -172,7 +171,7 @@ class APITestCase(unittest.TestCase):
             data=json.dumps({'body': 'updated body'}))
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
-        self.assertEqual('http://localhost' + json_response['url'], url)
+        self.assertEqual(json_response['url'], url)
         self.assertEqual(json_response['body'], 'updated body')
         self.assertEqual(json_response['body_html'], '<p>updated body</p>')
 
@@ -237,7 +236,7 @@ class APITestCase(unittest.TestCase):
             headers=self.get_api_headers('john@example.com', 'cat'))
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
-        self.assertEqual('http://localhost' + json_response['url'], url)
+        self.assertEqual(json_response['url'], url)
         self.assertEqual(json_response['body'],
                          'Good [post](http://example.com)!')
 

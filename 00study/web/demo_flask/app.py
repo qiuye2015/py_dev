@@ -1,10 +1,15 @@
 from apps.models import User, Role, Permission, Post, Follow
 from apps import create_app, db
-from flask_migrate import Migrate
+from flask_migrate import Migrate, upgrade
 import click
 import sys
 import os
 
+from dotenv import load_dotenv
+
+dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+if os.path.exists(dotenv_path):
+    load_dotenv(dotenv_path)
 
 COV = None
 if os.environ.get('FLASK_COVERAGE'):
@@ -12,7 +17,6 @@ if os.environ.get('FLASK_COVERAGE'):
 
     COV = coverage.coverage(branch=True, include='app/*')
     COV.start()
-
 
 app = create_app(os.getenv('FLASK_CONFIG') or 'default')
 migrate = Migrate(app, db)
@@ -53,6 +57,30 @@ def test(coverage, test_names):
         COV.html_report(directory=covdir)
         print('HTML version: file://%s/index.html' % covdir)
         COV.erase()
+
+
+@app.cli.command()
+@click.option('--length', default=25,
+              help='Number of functions to include in the profiler report.')
+@click.option('--profile-dir', default=None,
+              help='Directory where profiler data files are saved.')
+def profile(length, profile_dir):
+    """Start the application under the code profiler."""
+    from werkzeug.middleware.profiler import ProfilerMiddleware
+    app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[length],
+                                      profile_dir=profile_dir)
+    app.run()
+
+
+@app.cli.command()
+def deploy():
+    """Run deployment tasks."""
+    # 把数据库迁移到最新修订版本
+    upgrade()
+    # 创建或更新用户角色
+    Role.insert_roles()
+    # 确保所有用户都关注了他们自己
+    User.add_self_follows()
 
 
 if __name__ == '__main__':
