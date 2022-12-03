@@ -36,6 +36,8 @@ fake.posts(100)
 # test
 
 ```bash
+flask test --coverage
+
 http --json --auth leo@qq.com:123 GET  http://127.0.0.1:5000/api/v1/posts
 http --auth leo@qq.com:123 --json POST http://127.0.0.1:5000/api/v1/posts/ "body=I'm adding a post from the *command line*."
 http --auth leo@qq.com:123 --json POST http://127.0.0.1:5000/api/v1/tokens/
