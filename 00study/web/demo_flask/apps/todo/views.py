@@ -25,8 +25,8 @@ class Todo(Resource):
 
         # args = parser.parse_args()
         # print("get", args)
-        # return "get", 200
-        return render_template('index_now.html', current_time=datetime.utcnow()), 200
+        return "get", 200
+        # return render_template('index_now.html', current_time=datetime.utcnow()), 200
         # return {'message': 'get '}, 200
 
     def post(self):
