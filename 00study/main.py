@@ -1,9 +1,7 @@
 # from tool_log.get_logger import get_logger
 # from tool_log.init_logger import Logger
-import sys
-import traceback
 
-from tool_log import logger as logger3
+from tools.tool_log import logger as logger3
 
 
 #

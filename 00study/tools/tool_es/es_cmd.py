@@ -1,4 +1,3 @@
-from datetime import datetime
 from elasticsearch import Elasticsearch, helpers
 from elasticsearch.helpers import bulk
 import warnings
