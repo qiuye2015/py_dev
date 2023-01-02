@@ -145,6 +145,26 @@ def before_time_delta(days=0, hours=0, minutes=0, seconds=0, use_timestamp=False
 # def fmt(func):
 #     print(func.__name__, func())
 
+import time
+import pytz
+from datetime import datetime
+
+
+def timestamp2formatter(timestamp: float, timezone: str = None) -> str:
+    formatter = '%Y%m%dT%H%M%S'
+    if timezone is None:
+        return time.strftime(formatter, time.localtime(timestamp))
+    else:
+        tz = pytz.timezone(timezone)
+        dt = pytz.datetime.datetime.fromtimestamp(timestamp, tz)
+        return dt.strftime(formatter)
+
+
+def formatter2timestamp(yyyyMMddTHHMMSS: str, timezone: str = 'Asia/Shanghai') -> float:
+    tz = pytz.timezone(timezone)
+    formatter = "%Y%m%dT%H%M%S"
+    strptime = datetime.strptime(yyyyMMddTHHMMSS, formatter)
+    return tz.localize(strptime).timestamp()
 
 if __name__ == '__main__':
     print(now_ns())

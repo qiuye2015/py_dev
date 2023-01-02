@@ -1,7 +1,8 @@
 from elasticsearch import Elasticsearch, helpers
 from elasticsearch.helpers import bulk
 import warnings
-import es_enum
+# import es_enum
+from tools.tool_es import es_enum
 
 warnings.filterwarnings("ignore")
 
@@ -9,7 +10,7 @@ warnings.filterwarnings("ignore")
 def es_open(hosts_):
     # return Elasticsearch(hosts=hosts_,basic_auth=(),verify_certs=False)
     es = Elasticsearch(hosts=hosts_, verify_certs=False)
-    print(es.info())
+    # print(es.info())
     return es
 
 
@@ -33,7 +34,7 @@ def es_create_index(client_, index_="test_fjp"):
 def es_insert(client_, index_, id_, doc_):
     resp = client_.index(index=index_, id=id_, document=doc_)
     print("es_insert: ", resp['result'])
-    client_.indices.refresh(index=index)
+    client_.indices.refresh(index=index_)
 
 
 # bulk插入多条数据，性能好于循环单条插入 【推荐】
@@ -108,13 +109,13 @@ if __name__ == '__main__':
     # es_hosts = ["http://elastic:dpjhDNS8MfMj@10.134.220.14:9200"]
     # index = "test_fjp"
     es_hosts = ["http://127.0.0.1:9200"]
-    index = "fjp_test_index"
+    index = "test-hello-world"
     es_client = es_open(es_hosts)
 
     # 默认查询，没有任何筛选条件，默认显示前10条数据的所有信息
-    res = es_client.search(index='test_1')  # index：选择数据库
-    print(res)
-    exit(0)
+    res = es_client.search(index=index)  # index：选择数据库
+    # print(res)
+    # exit(0)
     es_create_index(es_client, index)
     doc = {
         "num": 0,

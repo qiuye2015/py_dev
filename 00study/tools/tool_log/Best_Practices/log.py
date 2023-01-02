@@ -2,10 +2,16 @@ import logging
 import os
 import sys
 from logging.handlers import TimedRotatingFileHandler
+from typing import Dict
+
+loggers: Dict[str, logging.Logger] = {}
 
 # FORMATTER = '[%(levelname)-.1s][%(asctime)s][%(process)s]' \
 #             '[%(filename)s:%(lineno)d]: %(message)s'
-FORMATTER = '%(levelname)-.1s - %(asctime)s - %(name)s - %(message)s (%(filename)s:%(lineno)d) - %(funcName)s'
+# FORMATTER = '%(levelname)-.1s - %(asctime)s - %(message)s - %(filename)s:%(lineno)d - %(funcName)s'
+FORMATTER = '%(levelname)-.1s - %(asctime)s - %(filename)s:%(lineno)d (%(funcName)s) - %(message)s'
+
+
 # FORMATTER = "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
 
 
@@ -44,6 +50,9 @@ def get_file_handler(filename):
 
 
 def get_logger(logger_name=__name__, filename=None, dir_name='log'):
+    if logger_name in loggers:
+        return loggers[logger_name]
+
     os.makedirs(dir_name, exist_ok=True)
     _logger = logging.getLogger(logger_name)
     _logger.setLevel(logging.DEBUG)
@@ -52,6 +61,8 @@ def get_logger(logger_name=__name__, filename=None, dir_name='log'):
         _logger.addHandler(get_file_handler(f"{dir_name}/{filename}"))
     # with this pattern, it's rarely necessary to propagate the error up to parent
     _logger.propagate = False
+
+    loggers[logger_name] = _logger
     return _logger
 
 
