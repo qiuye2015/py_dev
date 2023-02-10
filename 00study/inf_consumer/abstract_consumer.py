@@ -1,6 +1,7 @@
 import logging
 import signal
 import json
+import time
 
 from abc import abstractmethod
 from kafka import KafkaConsumer
@@ -33,20 +34,25 @@ class ConsumerWorkerInf(object):
 
     def _consume(self):
         records = self._consumer.poll(max_records=1)
+        time.sleep(1)
         if len(records) > 0:
             for messages in records.values():
                 for message in messages:
-                    # print("poll msg = ", message.value.decode('utf-8'))
                     try:
                         value = message.value.decode('utf-8')
-                        # self._process(value)
-                        self._process(json.loads(value))
+                        topic = message.topic
+                        partition = message.partition
+                        offset = message.offset
+                        # print(message)
+                        print("topic", topic, "partition", partition, "offset", offset)
+                        # self._process(json.loads(value))
+                        self._process(value)
                     except Exception as e:
                         logging.error('msg decode or json loads error: {}'.format(e))
             self._consumer.commit()
 
 
-def test():
+def demo_main():
     class TestConsumer(ConsumerWorkerInf):
         def __init__(self, _consumer):
             super().__init__(_consumer)
@@ -55,15 +61,15 @@ def test():
             print("****", value, kwargs)
 
     servers = ["127.0.0.1:9092"]
-    topic_name = "test_py_client"
-    group_id = "group_test_24"
+    topic_name = "test_10_partition"
+    group_id = "group_test_2"
     config = {
         'bootstrap_servers': servers,
         'group_id': group_id,
         'enable_auto_commit': False,
         'max_poll_records': 3,
         'session_timeout_ms': 300 * 1000,
-        'auto_offset_reset': 'earliest'
+        'auto_offset_reset': 'earliest',
     }
 
     consumer = KafkaConsumer(topic_name, **config)
@@ -82,4 +88,4 @@ def test():
 
 
 if __name__ == '__main__':
-    test()
+    demo_main()

@@ -132,3 +132,4 @@ tensorflow_learn/PekingUniversity_class/checkpoint/
 .DS_Store
 01nio
 requirements.txt
+tmp_demo/

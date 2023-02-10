@@ -82,7 +82,9 @@ def nano_time_format_to_sec(time_nano: int) -> int:
 
 def time_format_to_date(time_sec: int) -> str:
     try:
-        time_str = datetime.datetime.fromtimestamp(time_sec).strftime("%Y-%m-%d %H:%M:%S")
+        time_str = datetime.datetime.fromtimestamp(time_sec).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
         return time_str
     except Exception as ex:
         logging.error("time: %s cast error, errmsg: %s", time_sec, ex)
@@ -91,7 +93,9 @@ def time_format_to_date(time_sec: int) -> str:
 
 def ms_time_format_to_date(time_ms: int) -> str:
     try:
-        time_str = datetime.datetime.fromtimestamp(time_ms / 1000).strftime("%Y-%m-%d %H:%M:%S")
+        time_str = datetime.datetime.fromtimestamp(time_ms / 1000).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
         return time_str
     except Exception as ex:
         logging.error("time: %s cast error, errmsg: %s", time_ms, ex)
@@ -121,22 +125,18 @@ def get_day_of_day(n=0, with_ms=False):
 
 
 def after_time_delta(days=0, hours=0, minutes=0, seconds=0, use_timestamp=False):
-    ret = datetime.datetime.now() + \
-          datetime.timedelta(days=days,
-                             hours=hours,
-                             minutes=minutes,
-                             seconds=seconds)
+    ret = datetime.datetime.now() + datetime.timedelta(
+        days=days, hours=hours, minutes=minutes, seconds=seconds
+    )
     if use_timestamp:
         return ret
     return ret.strftime("%Y:%m:%d %H:%M:%S")
 
 
 def before_time_delta(days=0, hours=0, minutes=0, seconds=0, use_timestamp=False):
-    ret = datetime.datetime.now() - \
-          datetime.timedelta(days=days,
-                             hours=hours,
-                             minutes=minutes,
-                             seconds=seconds)
+    ret = datetime.datetime.now() - datetime.timedelta(
+        days=days, hours=hours, minutes=minutes, seconds=seconds
+    )
     if use_timestamp:
         return ret
     return ret.strftime("%Y:%m:%d %H:%M:%S")
@@ -145,9 +145,8 @@ def before_time_delta(days=0, hours=0, minutes=0, seconds=0, use_timestamp=False
 # def fmt(func):
 #     print(func.__name__, func())
 
-import time
+
 import pytz
-from datetime import datetime
 
 
 def timestamp2formatter(timestamp: float, timezone: str = None) -> str:
@@ -163,8 +162,9 @@ def timestamp2formatter(timestamp: float, timezone: str = None) -> str:
 def formatter2timestamp(yyyyMMddTHHMMSS: str, timezone: str = 'Asia/Shanghai') -> float:
     tz = pytz.timezone(timezone)
     formatter = "%Y%m%dT%H%M%S"
-    strptime = datetime.strptime(yyyyMMddTHHMMSS, formatter)
+    strptime = datetime.datetime.strptime(yyyyMMddTHHMMSS, formatter)
     return tz.localize(strptime).timestamp()
+
 
 if __name__ == '__main__':
     print(now_ns())
@@ -190,4 +190,4 @@ if __name__ == '__main__':
     print(get_day_of_day(10))
     print(time_format_to_date(1670771129))
 
-    print(time_format_to_date(1671176729707))
+    print(ms_time_format_to_date(1671176729707))
