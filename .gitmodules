@@ -1,0 +1,15 @@
+[submodule "00study/tools/tool_mysql/delete_archive/db-archiver"]
+	path = 00study/tools/tool_mysql/delete_archive/db-archiver
+	url = https://github.com/anujith-singh/db-archiver.git
+[submodule "00study/tools/tool_mysql/delete_archive/db-archiver_v2"]
+	path = 00study/tools/tool_mysql/delete_archive/db-archiver_v2
+	url = https://github.com/wenxpro/db_archiver.git
+[submodule "00study/tools/tool_mysql/delete_archive/mysql_archiver"]
+	path = 00study/tools/tool_mysql/delete_archive/mysql_archiver
+	url = https://github.com/dbarun/mysql_archiver.git
+[submodule "MyDistributedFrame"]
+	path = MyDistributedFrame
+	url = https://github.com/jiwang0346/MyDistributedFrame.git
+[submodule "ProducerConsumerPattern"]
+	path = ProducerConsumerPattern
+	url = https://github.com/mmmaaaggg/ProducerConsumerPattern.git

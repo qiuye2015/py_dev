@@ -133,3 +133,7 @@ tensorflow_learn/PekingUniversity_class/checkpoint/
 01nio
 requirements.txt
 tmp_demo/
+
+# binary
+apache-seatunnel-*
+DTS_CDC/DataBase/docker-compose-dev

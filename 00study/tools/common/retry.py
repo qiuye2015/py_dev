@@ -13,9 +13,19 @@ def retry(retry_times=2, retry_interval=0):
                     retried += 1
                     if retried > retry_times:
                         raise e
-                    print("exception occurred: ", e, f", and retry after {retry_interval} seconds")
+                    print(f"func: {func.__name__} exception occurred: {e}, and retry after {retry_interval} seconds, {retried} times")
                     time.sleep(retry_interval)
 
         return wrapper
 
     return decorator
+
+
+@retry(retry_times=2, retry_interval=2)
+def func_test(msg):
+    print(msg)
+    raise Exception('test except')
+
+
+if __name__ == '__main__':
+    func_test("fjp test")
