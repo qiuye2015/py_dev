@@ -145,13 +145,31 @@ DELETE FROM orders WHERE order_id = 10004;
 ```
 
 # SeaTunnel
+
+## install
+```bash
+# Step 1: 准备环境: Java（Java 8 或 11，理论上高于 Java 8 的其他版本也可以工作）安装和 JAVA_HOME 设置。
+# Step 2: 下载 SeaTunnel
+export version="2.3.3"
+##wget "https://archive.apache.org/dist/seatunnel/${version}/apache-seatunnel-${version}-bin.tar.gz"
+wget "https://mirrors.tuna.tsinghua.edu.cn/apache/seatunnel/${version}/apache-seatunnel-${version}-bin.tar.gz"
+tar -xzvf "apache-seatunnel-${version}-bin.tar.gz"
+# Step 3: 安装连接器插件: 从 2.2.0-beta 开始，二进制包默认不提供连接器依赖
+sh bin/install-plugin.sh 2.3.3
+
+# 运行 SeaTunnel 应用程序
+cd "apache-seatunnel-${version}"
+```
 ## demo启动
 
 ```bash
 # SeaTunnel
 ./bin/seatunnel.sh --config ./config/v2.batch.config.template -e local
+# 请先下载 Flink（所需版本>= 1.12.0）
 ./bin/start-seatunnel-flink-13-connector-v2.sh --config ./config/v2.streaming.conf.template
 ./bin/start-seatunnel-flink-15-connector-v2.sh --config ./config/v2.streaming.conf.template
+# 请先下载 Spark（所需版本 >= 2.4.0）
+## spark3.x.x
 ./bin/start-seatunnel-spark-3-connector-v2.sh \
 --master local[4] \
 --deploy-mode client \
@@ -182,16 +200,163 @@ wget https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.30/mysql-conn
 
 
 # flink-cdc
+## install
+```bash
+export version="1.17.1"
+wget "https://mirrors.tuna.tsinghua.edu.cn/apache/flink/flink-${version}/flink-${version}-bin-scala_2.12.tgz"
+tar -xzvf "flink-${version}-bin-scala_2.12.tgz"
+
+wget https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-elasticsearch7/3.0.1-1.17/flink-sql-connector-elasticsearch7-3.0.1-1.17.jar
+wget https://repo1.maven.org/maven2/com/ververica/flink-sql-connector-mysql-cdc/2.4.2/flink-sql-connector-mysql-cdc-2.4.2.jar
+wget https://repo1.maven.org/maven2/com/ververica/flink-sql-connector-tidb-cdc/2.4.2/flink-sql-connector-tidb-cdc-2.4.2.jar
+wget https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-kafka/1.17.1/flink-sql-connector-kafka-1.17.1.jar
+# Starting Flink cluster and Flink SQL CLI
+export JAVA_HOME=/opt/homebrew/opt/openjdk@11
+./bin/start-cluster.sh
+# http://localhost:8081/
+./bin/stop-cluster.sh
+```
 ## demo启动
+```bash
+#使用下面的命令启动 Flink SQL CLI
+./bin/sql-client.sh
+
+# 设置间隔时间为3秒
+SET execution.checkpointing.interval = 3s;
+# 设置本地时区为 Asia/Shanghai
+SET table.local-time-zone = Asia/Shanghai;
+
+# MySQL CDC 导入 Elasticsearch
+CREATE TABLE orders (
+   order_id INT,
+   order_date TIMESTAMP(0),
+   customer_name STRING,
+   price DECIMAL(10, 5),
+   product_id INT,
+   order_status BOOLEAN,
+   PRIMARY KEY (order_id) NOT ENFORCED
+ ) WITH (
+   'connector' = 'mysql-cdc',
+   'hostname' = 'localhost',
+   'port' = '33065',
+   'username' = 'root',
+   'password' = '123456',
+   'database-name' = 'mydb',
+   'table-name' = 'orders'
+ );
+
+
+CREATE TABLE enriched_orders (
+   order_id INT,
+   order_date TIMESTAMP(0),
+   customer_name STRING,
+   price DECIMAL(10, 5),
+   product_id INT,
+   order_status BOOLEAN,
+   PRIMARY KEY (order_id) NOT ENFORCED
+ ) WITH (
+     'connector' = 'elasticsearch-7',
+     'hosts' = 'http://localhost:9200',
+     'index' = 'enriched_orders'
+ );
+
+INSERT INTO enriched_orders SELECT o.* FROM orders AS o;
+
+# MongoDB CDC 导入 Elasticsearch
+CREATE TABLE orders_mongodb (
+   _id STRING,
+   order_id INT,
+   order_date TIMESTAMP_LTZ(3),
+   customer_id INT,
+   price DECIMAL(10, 5),
+   product ROW<name STRING, description STRING>,
+   order_status BOOLEAN,
+   PRIMARY KEY (_id) NOT ENFORCED
+ ) WITH (
+   'connector' = 'mongodb-cdc',
+   'hosts' = 'localhost:37017',
+   'username' = 'fjp',
+   'password' = 'fjp',
+   'database' = 'mgdb',
+   'collection' = 'orders'
+ );
+
+ CREATE TABLE enriched_orders_mongodb (
+   order_id INT,
+   order_date TIMESTAMP_LTZ(3),
+   customer_id INT,
+   price DECIMAL(10, 5),
+   product ROW<name STRING, description STRING>,
+   order_status BOOLEAN,
+   PRIMARY KEY (order_id) NOT ENFORCED
+ ) WITH (
+     'connector' = 'elasticsearch-7',
+     'hosts' = 'http://localhost:9200',
+     'index' = 'enriched_orders_mongodb'
+ );
+
+INSERT INTO enriched_orders_mongodb
+SELECT o.order_id,
+        o.order_date,
+        o.customer_id,
+        o.price,
+        o.product,
+        o.order_status
+FROM orders_mongodb AS o;
+
+# MongoDB CDC 导入 kakfa
+
+ CREATE TABLE Kafka_Table (
+   order_id INT,
+   order_date TIMESTAMP_LTZ(3),
+   customer_id INT,
+   price DECIMAL(10, 5),
+   product ROW<name STRING, description STRING>,
+   order_status BOOLEAN,
+   PRIMARY KEY (order_id) NOT ENFORCED
+ ) WITH (
+     'connector' = 'kafka',
+     'properties.bootstrap.servers' = '127.0.0.1:9092',
+     'properties.group.id' = 'flink-cdc-kafka-group',
+     'topic' = 'test_topic',
+     'format' = 'debezium-json',
+     'debezium-json.ignore-parse-errors' = 'true'
+ );
+
+INSERT INTO Kafka_Table
+SELECT o.order_id,
+        o.order_date,
+        o.customer_id,
+        o.price,
+        o.product,
+        o.order_status
+FROM orders_mongodb AS o;
+
+# MongoDB CDC 导入 console
+
+CREATE TABLE print_table WITH ('connector' = 'print')
+LIKE orders_mongodb (EXCLUDING ALL);
+
+INSERT INTO print_table
+SELECT * FROM orders_mongodb AS o;
+```
+- mongodb2kafka update操作转为两条kafka数据，先删d,后建c
+
 ## 测试启动
 ## 报错
 
 # BitSail
+## install
+```bash
+```
 ## demo启动
 ## 测试启动
 ## 报错
 
 # debezium
+## install
+```bash
+```
 ## demo启动
 ## 测试启动
 ## 报错
