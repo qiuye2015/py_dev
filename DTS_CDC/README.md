@@ -159,6 +159,15 @@ sh bin/install-plugin.sh 2.3.3
 
 # 运行 SeaTunnel 应用程序
 cd "apache-seatunnel-${version}"
+
+# 
+
+sh bin/seatunnel-cluster.sh -d
+
+# 
+wget https://mirrors.tuna.tsinghua.edu.cn/apache/seatunnel/seatunnel-web/1.0.0/apache-seatunnel-web-1.0.0-bin.tar.gz
+# wget https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.30/mysql-connector-java-8.0.30.jar -P libs/
+# http://127.0.0.1:8801/ui/
 ```
 ## demo启动
 
@@ -201,6 +210,10 @@ wget https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.30/mysql-conn
 
 # flink-cdc
 ## install
+> https://archive.apache.org/dist/flink/
+> 
+> https://nightlies.apache.org/flink/flink-docs-release-1.18/zh/docs/try-flink/local_installation/
+> 
 ```bash
 export version="1.17.1"
 wget "https://mirrors.tuna.tsinghua.edu.cn/apache/flink/flink-${version}/flink-${version}-bin-scala_2.12.tgz"
@@ -339,6 +352,40 @@ LIKE orders_mongodb (EXCLUDING ALL);
 
 INSERT INTO print_table
 SELECT * FROM orders_mongodb AS o;
+
+# TiDB CDC 导入 Elasticsearch
+CREATE TABLE orders_tidb (
+   order_id INT,
+   order_date TIMESTAMP(3),
+   customer_name STRING,
+   price DECIMAL(10, 5),
+   product_id INT,
+   order_status BOOLEAN,
+   PRIMARY KEY (order_id) NOT ENFORCED
+ ) WITH (
+    'connector' = 'tidb-cdc',
+    'tikv.grpc.timeout_in_ms' = '20000',
+    'pd-addresses' = '127.0.0.1:2379',
+    'database-name' = 'mydb',
+    'table-name' = 'orders'
+);
+
+CREATE TABLE enriched_orders_tidb (
+   order_id INT,
+   order_date DATE,
+   customer_name STRING,
+   order_status BOOLEAN,
+   PRIMARY KEY (order_id) NOT ENFORCED
+ ) WITH (
+     'connector' = 'elasticsearch-7',
+     'hosts' = 'http://localhost:9200',
+     'index' = 'enriched_orders_tidb'
+ );
+
+INSERT INTO enriched_orders_tidb
+  SELECT o.order_id, o.order_date, o.customer_name, o.order_status
+  FROM orders_tidb AS o;
+  
 ```
 - mongodb2kafka update操作转为两条kafka数据，先删d,后建c
 

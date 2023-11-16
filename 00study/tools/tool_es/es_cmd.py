@@ -1,8 +1,10 @@
+import json
+import warnings
+
 from elasticsearch import Elasticsearch, helpers
 from elasticsearch.helpers import bulk
-import warnings
+
 # import es_enum
-from tools.tool_es import es_enum
 
 warnings.filterwarnings("ignore")
 
@@ -42,14 +44,7 @@ def es_insert_bulk(client_, index_, docs_):
     bulk_data = []
     # print(docs_)
     for i, row in enumerate(docs_):
-        bulk_data.append({
-            "_index": index_,
-            "_id": i + 1,
-            "_source": {
-                "num": row["num"],
-                "name": row["name"]
-            }
-        })
+        bulk_data.append({"_index": index_, "_id": i + 1, "_source": {"num": row["num"], "name": row["name"]}})
     resp = bulk(client_, bulk_data)
     print("es_insert_bulk: ", resp)
     client_.indices.refresh(index=index)
@@ -89,10 +84,7 @@ def es_delete_by_query(client, index_, body_={"query": {"match_all": {}}}):
 
 
 def es_update(client, index_, id_, body_, retry_on_conflict=10):
-    es_client.update(index=index_,
-                     id=id_,
-                     body=body_,
-                     retry_on_conflict=retry_on_conflict)
+    es_client.update(index=index_, id=id_, body=body_, retry_on_conflict=retry_on_conflict)
 
 
 def es_push(records, index, es):
@@ -105,40 +97,88 @@ def es_push(records, index, es):
     helpers.bulk(es, bulk_push)
 
 
+def es_get_mapping(es, idx):
+    """
+    Get the Elasticsearch mapping for an index.
+    """
+    return es.indices.get_mapping(index=idx)
+
+
+# TODO:
+def es_get_mapping_by_alias(es, idx):
+    """
+    Get the Elasticsearch mapping for an index.
+    """
+    return es.indices.get_mapping(index=idx)
+
+
+# def es_copy_mapping(es, source_index, target_index):
+#     """
+#     Copy the mappings and settings from `source_index` to `target_index`.
+#
+#     `target_index` must not exist.  This operation does not copy any data.
+#     """
+#     idx = es.indices
+#     mapping = idx.get_mapping(index=source_index)
+#     settings = idx.get_settings(index=source_index)[source_index]
+#
+#     assert not es.indices.exists(target_index), 'Trying to copy mapping to an already existing index: %s' % target_index
+#
+#     idx.create(target_index, body={'settings': settings['settings']})
+#
+#     for doc_type, schema in mapping[source_index]['mappings'].items():
+#         idx.put_mapping(index=target_index, doc_type=doc_type, body=schema)
+
+
+def es_dump_mappings(es, verbose, outfile):
+    """
+    Dumps ES mappings.
+    """
+    aliases = es.client.indices.get_alias("*")
+    mappings = es.client.indices.get_mapping()
+    for alias in sorted(aliases):
+        if alias[0] != ".":
+            mapping = mappings.get(alias, {}).get("mappings")
+
+            if verbose or not outfile:
+                print(json.dumps(mapping, indent=2))
+            if outfile:
+                outfile.write(f"{alias}\n")
+                json.dump(mapping, outfile, indent=2)
+                outfile.write("\n")
+
+
+def demo_test(es):
+    # idx = "test_index_alias"
+    idx = "test_index"
+    r = es_get_mapping(es, idx)
+    print(r.get(idx, {}).get('mappings', {}))
+    pass
+
+
 if __name__ == '__main__':
     # es_hosts = ["http://elastic:dpjhDNS8MfMj@10.134.220.14:9200"]
     # index = "test_fjp"
     es_hosts = ["http://127.0.0.1:9200"]
     index = "test-hello-world"
     es_client = es_open(es_hosts)
+    demo_test(es_client)
+    exit(1)
 
     # 默认查询，没有任何筛选条件，默认显示前10条数据的所有信息
     res = es_client.search(index=index)  # index：选择数据库
     # print(res)
     # exit(0)
     es_create_index(es_client, index)
-    doc = {
-        "num": 0,
-        "name": "a0"
-    }
-    docs = [{
-        "num": 1,
-        "name": "a1"
-    }, {
-        "num": 2,
-        "name": "a2"
-    }]
+    doc = {"num": 0, "name": "a0"}
+    docs = [{"num": 1, "name": "a1"}, {"num": 2, "name": "a2"}]
     es_insert(es_client, index, 0, doc)
 
     es_insert_bulk(es_client, index, docs)
     es_count(es_client, index)
 
     es_search(es_client, index)
-    body = {
-        "term": {
-            "num": 1
-        }
-    }
+    body = {"term": {"num": 1}}
     es_search(es_client, index, body)
     # body = {
     #     "terms": {
@@ -160,13 +200,7 @@ if __name__ == '__main__':
     es_find_by_id(es_client, index, 1)
     es_delete_by_id(es_client, index, "2")
 
-    query = {
-        "query": {
-            "match": {
-                "name": "a0"
-            }
-        }
-    }
+    query = {"query": {"match": {"name": "a0"}}}
     es_delete_by_query(es_client, index, query)
     # es_update(es_client, id_,"")
     es_close(es_client)

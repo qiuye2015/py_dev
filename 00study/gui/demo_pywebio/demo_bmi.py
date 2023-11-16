@@ -1,5 +1,5 @@
-import pywebio
-from pywebio.input import input, FLOAT
+from pywebio import start_server
+from pywebio.input import FLOAT, input
 from pywebio.output import put_text
 
 
@@ -19,4 +19,4 @@ def bmi():
 
 if __name__ == '__main__':
     # bmi()
-    pywebio.start_server(bmi, port=80)
+    start_server(bmi, host="127.0.0.1", port=8080, debug=True, cdn=False)
