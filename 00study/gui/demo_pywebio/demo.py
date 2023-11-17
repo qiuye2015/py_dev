@@ -23,52 +23,98 @@ PyWebIO使用scope模型来控制内容输出的位置。scope为输出内容的
 Server模式下，如果需要在新创建的线程中使用PyWebIO的交互函数，需要手动调用 register_thread(thread) 对新进程进行注册（这样PyWebIO才能知道新创建的线程属于哪个会话）
 """
 from datetime import datetime
-from functools import partial
 import json
 import threading
 import time
+import urllib.request
 
 import pywebio
-from pywebio import start_server
 from pywebio.input import (
-    actions,
-    checkbox,
-    file_upload,
     input,
-    input_group,
     input_update,
-    NUMBER,
-    PASSWORD,
-    radio,
-    select,
-    TEXT,
-    textarea,
 )
 from pywebio.output import (
-    close_popup,
-    popup,
-    put_button,
+    datatable_insert, datatable_remove, datatable_update, popup,
     put_buttons,
-    put_code,
-    put_collapse,
-    put_column,
-    put_file,
-    put_grid,
-    put_html,
-    put_image,
-    put_loading,
-    put_markdown,
-    put_progressbar,
-    put_row,
+    put_datatable, put_markdown,
     put_scope,
-    put_table,
-    put_text,
-    set_progressbar,
-    span,
+    put_scrollable, put_text,
     toast,
     use_scope,
 )
 from pywebio.session import register_thread
+
+with urllib.request.urlopen('https://fakerapi.it/api/v1/persons?_quantity=30') as f:
+    data = json.load(f)['data']
+
+put_datatable(
+    data,
+    actions=[
+        ("Edit Email", lambda row_id: datatable_update('user', input("Email"), row_id, "email")),
+        ("Insert a Row", lambda row_id: datatable_insert('user', data[0], row_id)),
+        None,  # separator
+        ("Delete", lambda row_id: datatable_remove('user', row_id)),
+    ],
+    onselect=lambda row_id: toast(f'Selected row: {row_id}'),
+    instance_id='user'
+)
+
+put_scrollable(put_scope('scrollable'), height=200, keep_bottom=True)
+put_text("You can click the area to prevent auto scroll.", scope='scrollable')
+
+while 1:
+    put_text(time.time(), scope='scrollable')
+    time.sleep(0.5)
+
+put_collapse('Collapse title', [
+    'text',
+    put_markdown('~~Strikethrough~~'),
+    put_table([
+        ['Commodity', 'Price'],
+        ['Apple', '5.5'],
+    ])
+], open=True)
+
+put_collapse('Large text', 'Awesome PyWebIO! ' * 30)
+
+put_tabs([
+    {'title': 'Text', 'content': 'Hello world'},
+    {'title': 'Markdown', 'content': put_markdown('~~Strikethrough~~')},
+    {'title': 'More content', 'content': [
+        put_table([
+            ['Commodity', 'Price'],
+            ['Apple', '5.5'],
+            ['Banana', '7'],
+        ]),
+        put_link('pywebio', 'https://github.com/wang0618/PyWebIO')
+    ]},
+])
+
+content = open('/Users/leo.fu1/Desktop/china.png', 'rb').read()
+put_file('hello-world.txt', content, 'download me')
+
+img = open('/Users/leo.fu1/Desktop/china.png', 'rb').read()
+put_image(img, width='50px')
+
+put_image('https://www.python.org/static/img/python-logo.png')
+
+
+def row_action(choice, id):
+    put_text("You click %s button with id: %s" % (choice, id))
+
+
+put_buttons(['edit', 'delete'], onclick=partial(row_action, id=1))
+
+
+def edit():
+    put_text("You click edit button")
+
+
+def delete():
+    put_text("You click delete button")
+
+
+put_buttons(['edit', 'delete'], onclick=[edit, delete])
 
 put_table(
     [
