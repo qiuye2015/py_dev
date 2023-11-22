@@ -22,27 +22,184 @@ PyWebIO使用scope模型来控制内容输出的位置。scope为输出内容的
 
 Server模式下，如果需要在新创建的线程中使用PyWebIO的交互函数，需要手动调用 register_thread(thread) 对新进程进行注册（这样PyWebIO才能知道新创建的线程属于哪个会话）
 """
+import asyncio
 from datetime import datetime
-import json
 import threading
 import time
-import urllib.request
 
+from flask import Flask
 import pywebio
-from pywebio.input import (
-    input,
-    input_update,
-)
-from pywebio.output import (
-    datatable_insert, datatable_remove, datatable_update, popup,
-    put_buttons,
-    put_datatable, put_markdown,
-    put_scope,
-    put_scrollable, put_text,
-    toast,
-    use_scope,
-)
-from pywebio.session import register_thread
+from pywebio import start_server
+from pywebio.input import *
+from pywebio.output import *
+from pywebio.pin import pin, pin_wait_change, put_input
+from pywebio.platform import run_event_loop
+from pywebio.platform.flask import webio_view
+from pywebio.session import download, go_app, register_thread
+from pywebio.session import run_asyncio_coroutine
+
+
+async def hello_word():
+    put_text('Hello ...')
+    await run_asyncio_coroutine(asyncio.sleep(1))  # can't just "await asyncio.sleep(1)"
+    put_text('... World!')
+
+
+app = Flask(__name__)
+app.add_url_rule('/hello', 'webio_view', webio_view(hello_word, cdn=False),
+    methods=['GET', 'POST', 'OPTIONS'])
+
+# thread to run event loop
+threading.Thread(target=run_event_loop, daemon=True).start()
+app.run(host='localhost', port=8080)
+
+
+async def hello_word():
+    put_text('Hello ...')
+    await asyncio.sleep(1)  # await awaitable objects in asyncio
+    put_text('... World!')
+
+
+async def main():
+    await hello_word()  # await coroutine
+    put_text('Bye, bye')
+
+
+start_server(main, auto_open_webbrowser=True, cdn=False)
+
+
+async def say_hello():
+    name = await input("what's your name?")
+    put_text('Hello, %s' % name)
+
+
+start_server(say_hello, auto_open_webbrowser=True, cdn=False)
+
+app = Flask(__name__)
+
+
+def task_func():
+    print("*" * 20)
+
+
+# `task_func` is PyWebIO task function
+app.add_url_rule('/tool', 'webio_view', webio_view(task_func),
+    methods=['GET', 'POST', 'OPTIONS'])  # need GET,POST and OPTIONS methods
+
+# Permission denied
+app.run(host='localhost', port=8080)
+
+
+def task_1():
+    put_text('task_1')
+    put_buttons(['Go task 2'], [lambda: go_app('task_2')])
+
+
+def task_2():
+    put_text('task_2')
+    put_buttons(['Go task 1'], [lambda: go_app('task_1')])
+
+
+def index():
+    put_link('Go task 1', app='task_1')  # Use `app` parameter to specify the task name
+    put_link('Go task 2', app='task_2')
+
+
+# equal to `start_server({'index': index, 'task_1': task_1, 'task_2': task_2})`
+start_server([index, task_1, task_2], cdn=False)
+print("*" * 20)
+
+put_input('a', type='number', value=0)
+put_input('b', type='number', value=0)
+
+while True:
+    changed = pin_wait_change('a', 'b')
+    with use_scope('res', clear=True):
+        put_code(changed)
+        put_text("a + b = %s" % (pin.a + pin.b))
+
+put_input('counter', type='number', value=0)
+
+while True:
+    pin.counter = pin.counter + 1  # Equivalent to: pin['counter'] = pin['counter'] + 1
+    time.sleep(1)
+
+put_input('pin_name')
+put_buttons(['Get Pin Value'], lambda _: put_text(pin.pin_name))
+
+put_row([
+    put_input('input'),
+    put_select('select', options=['A', 'B', 'C'])
+])
+
+with use_scope('search-area'):
+    put_input('search', placeholder='Search')
+
+put_input('input', label='This is a input widget')
+
+set_env(title='FJP Awesome PyWebIO!!', output_animation=False)
+
+run_js('console.log(a + b)', a=1, b=2)
+
+put_button('Click to download', lambda: download('hello-world.txt', b'hello world!'))
+
+put_grid([
+    [put_text('A'), put_text('B'), put_text('C')],
+    [None, span(put_text('D'), col=2, row=1)],
+    [put_text('E'), put_text('F'), put_text('G')],
+], cell_width='100px', cell_height='100px')
+
+# Two code blocks of equal width, separated by 10 pixels
+put_row([put_code('A'), None, put_code('B')])
+
+# The width ratio of the left and right code blocks is 2:3, which is equivalent to size='2fr 10px 3fr'
+put_row([put_code('A'), None, put_code('B')], size='40% 10px 60%')
+
+with popup('Popup title') as s:
+    put_html('<h3>Popup Content</h3>')
+    put_text('html: <br/>')
+    put_buttons([('clear()', s)], onclick=clear)
+
+put_text('Also work!', scope=s)
+
+popup('popup title', 'popup text content', size=PopupSize.SMALL)
+
+popup('Popup title', [
+    put_html('<h3>Popup Content</h3>'),
+    'html: <br/>',
+    put_table([['A', 'B'], ['C', 'D']]),
+    put_buttons(['close_popup()'], onclick=lambda _: close_popup())
+])
+
+
+def show_msg():
+    put_text("You clicked the notification.")
+
+
+toast('New messages', position='right', color='#2188ff', duration=0, onclick=show_msg)
+
+tpl = '''
+<details {{#open}}open{{/open}}>
+    <summary>{{title}}</summary>
+    {{#contents}}
+        {{& pywebio_output_parse}}
+    {{/contents}}
+</details>
+'''
+
+put_widget(tpl, {
+    "open": True,
+    "title": 'More content',
+    "contents": [
+        'text',
+        put_markdown('~~Strikethrough~~'),
+        put_table([
+            ['Commodity', 'Price'],
+            ['Apple', '5.5'],
+            ['Banana', '7'],
+        ])
+    ]
+})
 
 with urllib.request.urlopen('https://fakerapi.it/api/v1/persons?_quantity=30') as f:
     data = json.load(f)['data']

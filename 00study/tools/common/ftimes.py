@@ -1,8 +1,7 @@
 # coding: utf-8
-import datetime
 import logging
 import time
-
+import datetime
 
 # 1秒 = 1000毫秒
 # 1毫秒 = 1000微秒
@@ -228,11 +227,11 @@ def get_start_timestamp(months_ago=0, days_ago=0):
 
 
 if __name__ == '__main__':
-    test_function()
-    exit(0)
+    # test_function()
+    # exit(0)
     print(now_ns())
     print(now_us())
-    print(now_msnow_ms())
+    print(now_ms())
     print(now_s())
     # print(get_epoch())
     print(current_microsecond())
@@ -258,3 +257,9 @@ if __name__ == '__main__':
     print(get_start_timestamp(months_ago=3))
     print(get_start_timestamp(days_ago=7))
     print(get_start_timestamp(3, 7))
+
+
+    time_stamp = '{0:%Y-%m-%d-%H-%M}'.format(datetime.datetime.now())
+    print(time_stamp)
+    time_stamp = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime(time.time()))
+    print("---",time_stamp)

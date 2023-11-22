@@ -138,3 +138,5 @@ tmp_demo/
 apache-seatunnel-*
 seatunnel-web*
 DTS_CDC/DataBase/docker-compose-dev
+# DB
+test.db
