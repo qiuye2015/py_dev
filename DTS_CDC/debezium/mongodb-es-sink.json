@@ -1,0 +1,19 @@
+{
+    "name": "mongodb-elastic-sink-v14",
+    "config": {
+        "connector.class": "io.confluent.connect.elasticsearch.ElasticsearchSinkConnector",
+        "tasks.max": "1",
+        "topics": "customers",
+        "connection.url": "http://elastic:9200",
+        "transforms": "mongoflatten,key,ReplaceField",
+        "transforms.mongoflatten.type" : "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState",
+        "transforms.mongoflatten.drop.tombstones": "false",
+        "transforms.key.type": "org.apache.kafka.connect.transforms.ExtractField$Key",
+        "transforms.key.field": "id",
+        "transforms.ReplaceField.type":"org.apache.kafka.connect.transforms.ReplaceField$Value",
+        "transforms.ReplaceField.exclude": "_id",
+        "key.ignore": "false",
+        "type.name": "customer",
+        "behavior.on.null.values": "delete"
+    }
+}

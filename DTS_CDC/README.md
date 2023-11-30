@@ -147,6 +147,7 @@ DELETE FROM orders WHERE order_id = 10004;
 # SeaTunnel
 
 ## install
+https://mp.weixin.qq.com/s/eNWGP_09Oh4pHdoQkmGPzg
 ```bash
 # Step 1: 准备环境: Java（Java 8 或 11，理论上高于 Java 8 的其他版本也可以工作）安装和 JAVA_HOME 设置。
 # Step 2: 下载 SeaTunnel
@@ -397,14 +398,113 @@ INSERT INTO enriched_orders_tidb
 ```bash
 ```
 ## demo启动
+```bash
+# mysql 有问题，不支持cdc
+bash bin/bitsail run \
+    --engine flink \
+  --execution-mode run \
+  --deployment-mode local \
+  --conf Mysql_Print_Example.json
+
+
+bash bin/bitsail run \
+    --engine flink \
+  --execution-mode run \
+  --deployment-mode local \
+  --conf MongoDB_Print_Example.json
+
+  
+bash bin/bitsail run \
+    --engine flink \
+  --execution-mode run \
+  --deployment-mode local \
+  --conf Fake_Kafka_Example.json
+
+
+```
 ## 测试启动
 ## 报错
 
 # debezium
+
+## mongodb
+- 支持的 MongoDB 拓扑: 副本集/分片集
+- 如果连接器在任务快照完成之前停止，则在重新启动时，连接器将再次开始快照。
 ## install
 ```bash
+wget https://repo1.maven.org/maven2/io/debezium/debezium-server-dist/2.4.1.Final/debezium-server-dist-2.4.1.Final.tar.gz
+
 ```
 ## demo启动
-## 测试启动
-## 报错
+```bash
+export DEBEZIUM_VERSION=2.4
+docker-compose up -d
+# 通过 UI 创建连接器: http://localhost:8080
 
+docker exec -it db-mysql bash -c 'mysql -u $MYSQL_USER -p$MYSQL_PASSWORD inventory'
+
+docker exec -it db-mongo bash -c 'mongo -u admin -p admin --authenticationDatabase admin localhost:37017/inventory'
+
+# 检查更改事件
+# Open in a new terminal
+# Viewing the change events in the kafka container
+docker exec -it kafka bash
+./bin/kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic [TOPIC_NAME] --from-beginning
+
+db.orders.insert([
+    { _id : NumberLong("10005"), order_date : new ISODate("2023-11-27T00:00:00Z"), purchaser_id : NumberLong("1001"), quantity : NumberInt("1"), product_id : NumberLong("102") },
+]);
+
+db.orders.updateOne(
+  { _id: 10005 },
+  { $set: { quantity: 10 } }
+);
+
+db.orders.deleteOne(
+  { _id : 10005 }
+);
+  
+db.orders.insert([
+    { _id : NumberLong("10006"), order_date : new ISODate("2023-11-27T00:00:00Z"), purchaser_id : NumberLong("1001"), quantity : NumberInt("1"), product_id : NumberLong("102"), product_desc: 
+      { 
+        name: 'rocks',
+        description: 'box of assorted rocks'
+      } 
+    },
+]);
+  
+# 停止所有服务
+docker-compose down
+```
+## 测试启动
+```bash
+# docker run -it --rm --name connect -p 8083:8083 -e GROUP_ID=1 -e CONFIG_STORAGE_TOPIC=my_connect_configs -e OFFSET_STORAGE_TOPIC=my_connect_offsets -e STATUS_STORAGE_TOPIC=my_connect_statuses --link kafka:kafka --link mysql:mysql quay.io/debezium/connect:2.4
+{
+  "name": "inventory-connector",  # 连接器的名称
+  "config": {  
+    "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+    "tasks.max": "1",  # MySQL connector 任何时候都只能运行一个任务。由于 MySQL 连接器读取 MySQL 服务器的 binlog ，因此使用单个连接器任务可确保正确的顺序和事件处理
+    "database.hostname": "mysql",  
+    "database.port": "3306",
+    "database.user": "debezium",
+    "database.password": "dbz",
+    "database.server.id": "184054",  
+    "topic.prefix": "dbserver1",  # 唯一的主题前缀。此名称将用作所有 Kafka 主题的前缀。 
+    "database.include.list": "inventory",  
+    "schema.history.internal.kafka.bootstrap.servers": "kafka:9092",  # 连接器将使用相同的brokers（发送事件的brokers）和主题名称，在Kafka中存储数据库模式的历史记录。在重新启动时，连接器将恢复在binlog中连接器应开始读取的时间点存在的数据库模式
+    "schema.history.internal.kafka.topic": "schema-changes.inventory"  
+  }
+
+# snapshot.mode = initial/initial_only/when_needed/never/schema_only/schema_only_recovery
+
+SELECT * FROM customers;
+UPDATE customers SET first_name='Anne Marie' WHERE id=1004;
+DELETE FROM addresses WHERE customer_id=1004;
+DELETE FROM customers WHERE id=1004;
+# 墓碑事件 (tombstone event) a key and an empty value
+INSERT INTO customers VALUES (default, "Sarah", "Thompson", "kitt@acme.com");
+INSERT INTO customers VALUES (default, "Kenneth", "Anderson", "kander@acme.com");
+```
+## 报错
+- `Config property 'mongodb.hosts' will be removed in the future, use 'mongodb.connection.string' instead`
+- https://docs.redis.com/latest/rdi/installation/debezium-server-configuration/
