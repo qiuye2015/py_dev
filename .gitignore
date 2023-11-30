@@ -138,5 +138,9 @@ tmp_demo/
 apache-seatunnel-*
 seatunnel-web*
 DTS_CDC/DataBase/docker-compose-dev
+DTS_CDC/debezium/container-images/
+DTS_CDC/debezium/debezium-examples/
+DTS_CDC/debezium/debezium-server*
+DTS_CDC/debezium/debezium
 # DB
 test.db

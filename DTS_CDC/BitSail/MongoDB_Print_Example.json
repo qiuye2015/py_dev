@@ -1,0 +1,43 @@
+{
+  "job": {
+    "common": {
+      "job_id": -2501346,
+      "job_name": "bitsail_mongodb_to_print_test",
+      "instance_id": -20501346,
+      "user_name": "user"
+    },
+    "reader": {
+      "class": "com.bytedance.bitsail.connector.legacy.mongodb.source.MongoDBInputFormat",
+      "split_key": "_id",
+      "split_pk": "_id",
+      "host": "127.0.0.1",
+      "port": 37017,
+      "db_name": "mgdb",
+      "user_name":"fjp",
+      "password": "fjp",
+      "collection_name": "orders",
+      "auth_db_name": "admin",
+      "columns": [
+        {
+          "index": 0,
+          "name": "_id",
+          "type": "objectid"
+        },
+        {
+          "index": 1,
+          "name": "order_id",
+          "type": "int"
+        },
+        {
+          "index": 2,
+          "name": "customer_id",
+          "type": "long"
+        }
+      ],
+      "reader_parallelism_num":1
+    },
+    "writer": {
+      "class": "com.bytedance.bitsail.connector.legacy.print.sink.PrintSink"
+    }
+  }
+}

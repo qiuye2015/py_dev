@@ -1,0 +1,51 @@
+{
+  "job": {
+    "common": {
+      "job_id": 312124,
+      "instance_id": 31244321,
+      "job_name": "BitSail_mysql_to_print_test",
+      "user_name": "test"
+    },
+    "writer": {
+      "class": "com.bytedance.bitsail.connector.legacy.print.sink.PrintSink"
+    },
+    "reader": {
+      "class": "com.bytedance.bitsail.connector.legacy.jdbc.source.JDBCInputFormat",
+      "columns": [
+        {
+          "index": 0,
+          "name": "order_id",
+          "type": "int"
+        },
+        {
+          "name": "customer_name",
+          "type": "varchar"
+        },
+        {
+          "name": "product_id",
+          "type": "int"
+        },
+        {
+          "name": "order_status",
+          "type": "tinyint"
+        }
+      ],
+      "table_name": "orders",
+      "password": "123456",
+      "db_name": "mydb",
+      "user_name": "root",
+      "split_pk": "order_id",
+      "connections": [
+        {
+          "slaves": [
+            {
+              "port": 33065,
+              "db_url": "jdbc:mariadb://127.0.0.1:33065/mydb",
+               "host": "localhost"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

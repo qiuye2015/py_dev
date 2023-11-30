@@ -508,3 +508,99 @@ INSERT INTO customers VALUES (default, "Kenneth", "Anderson", "kander@acme.com")
 ## 报错
 - `Config property 'mongodb.hosts' will be removed in the future, use 'mongodb.connection.string' instead`
 - https://docs.redis.com/latest/rdi/installation/debezium-server-configuration/
+
+## MYSQL2ES -- Topology
+```
+                   +-------------+
+                   |             |
+                   |    MySQL    |
+                   |             |
+                   +------+------+
+                          |
+                          |
+                          |
+          +---------------v------------------+
+          |                                  |
+          |           Kafka Connect          |
+          |    (Debezium, ES connectors)     |
+          |                                  |
+          +---------------+------------------+
+                          |
+                          |
+                          |
+                          |
+                  +-------v--------+
+                  |                |
+                  | Elasticsearch  |
+                  |                |
+                  +----------------+
+
+
+```
+```bash
+# Start the application
+export DEBEZIUM_VERSION=2.4
+docker compose -f docker-compose-mysql2es.yaml up --build
+# Start Elasticsearch connector
+curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @es-sink.json
+# Start MySQL connector
+curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @mysql-source.json
+
+# Check contents of the MySQL database:
+docker compose -f docker-compose-mysql2es.yaml exec mysql bash -c 'mysql -u $MYSQL_USER  -p$MYSQL_PASSWORD inventory -e "select * from customers"'
+# Verify that Elasticsearch has the same content:
+curl 'http://localhost:9200/customers/_search?pretty'
+
+# Insert a new record into MySQL:
+docker compose -f docker-compose-mysql2es.yaml exec mysql bash -c 'mysql -u $MYSQL_USER  -p$MYSQL_PASSWORD inventory'
+insert into customers values(default, 'John', 'Doe', 'john.doe@example.com');
+# Update a record in MySQL:
+update customers set first_name='Jane', last_name='Roe' where last_name='Doe';
+# Delete a record in MySQL:
+delete from customers where email='john.doe@example.com';
+
+# Shut down the cluster
+docker compose -f docker-compose-mysql2es.yaml down
+```
+## MONGODB2ES
+```bash
+docker-compose -f docker-compose-mongodb2es.yaml up --build
+# Initialize MongoDB replica set and insert some test data
+docker compose exec mongodb bash -c '/usr/local/bin/init-inventory.sh'
+# Current host
+# if using docker-machine:
+#export CURRENT_HOST=$(docker-machine ip $(docker-machine active));
+# or any other host
+export CURRENT_HOST='localhost'
+
+# Start Elasticsearch connector
+curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://$CURRENT_HOST:8083/connectors/ -d @mongodb-es-sink.json
+# Start Debezium MongoDB CDC connector
+curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://$CURRENT_HOST:8083/connectors/ -d @mongodb-source.json
+
+# Check contents of the MongoDB database:
+docker compose exec mongodb bash -c 'mongo -u $MONGODB_USER -p $MONGODB_PASSWORD --authenticationDatabase admin inventory --eval "db.customers.find()"'
+# Insert a new record into MongoDB:
+docker compose exec mongodb bash -c 'mongo -u $MONGODB_USER -p $MONGODB_PASSWORD --authenticationDatabase admin inventory'
+db.customers.insert([
+    { _id : NumberLong("1005"), first_name : 'Bob', last_name : 'Hopper', email : 'bob@example.com' }
+]);
+# Update a record in MongoDB:
+db.customers.update(
+   {
+    _id : NumberLong("1005")
+   },
+   {
+     $set : {
+       first_name: "Billy-Bob"
+     }
+   }
+);
+db.customers.remove(
+   {
+    _id: NumberLong("1005")
+   }
+);
+
+docker compose -f docker-compose-mongodb2es.yaml down
+```
