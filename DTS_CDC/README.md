@@ -219,22 +219,27 @@ wget https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.30/mysql-conn
 export version="1.17.1"
 wget "https://mirrors.tuna.tsinghua.edu.cn/apache/flink/flink-${version}/flink-${version}-bin-scala_2.12.tgz"
 tar -xzvf "flink-${version}-bin-scala_2.12.tgz"
+cd "flink-${version}/lib"
 
 wget https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-elasticsearch7/3.0.1-1.17/flink-sql-connector-elasticsearch7-3.0.1-1.17.jar
 wget https://repo1.maven.org/maven2/com/ververica/flink-sql-connector-mysql-cdc/2.4.2/flink-sql-connector-mysql-cdc-2.4.2.jar
 wget https://repo1.maven.org/maven2/com/ververica/flink-sql-connector-tidb-cdc/2.4.2/flink-sql-connector-tidb-cdc-2.4.2.jar
 wget https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-kafka/1.17.1/flink-sql-connector-kafka-1.17.1.jar
 # Starting Flink cluster and Flink SQL CLI
-export JAVA_HOME=/opt/homebrew/opt/openjdk@11
+# export JAVA_HOME=/opt/homebrew/opt/openjdk@11
 ./bin/start-cluster.sh
 # http://localhost:8081/
 ./bin/stop-cluster.sh
-```
-## demo启动
-```bash
+
 #使用下面的命令启动 Flink SQL CLI
 ./bin/sql-client.sh
 
+# 使用 savepoint 停止现有的 Flink 作业。
+./bin/flink stop $Existing_Flink_JOB_ID
+```
+## demo启动
+### MySQL CDC 导入 Elasticsearch
+```bash
 # 设置间隔时间为3秒
 SET execution.checkpointing.interval = 3s;
 # 设置本地时区为 Asia/Shanghai
@@ -271,14 +276,19 @@ CREATE TABLE enriched_orders (
  ) WITH (
      'connector' = 'elasticsearch-7',
      'hosts' = 'http://localhost:9200',
-     'index' = 'enriched_orders'
+     'index' = 'flink_orders'
  );
 
 INSERT INTO enriched_orders SELECT o.* FROM orders AS o;
+```
 
-# MongoDB CDC 导入 Elasticsearch
+### MongoDB CDC 导入 Elasticsearch
+```bash
 CREATE TABLE orders_mongodb (
-   _id STRING,
+   db_name STRING METADATA FROM 'database_name' VIRTUAL,
+   collection_name STRING METADATA  FROM 'collection_name' VIRTUAL,
+   operation_ts TIMESTAMP_LTZ(3) METADATA FROM 'op_ts' VIRTUAL,
+   _id STRING, 
    order_id INT,
    order_date TIMESTAMP_LTZ(3),
    customer_id INT,
@@ -302,24 +312,30 @@ CREATE TABLE orders_mongodb (
    price DECIMAL(10, 5),
    product ROW<name STRING, description STRING>,
    order_status BOOLEAN,
+   db_name STRING,
+   collection_name STRING,
+   operation_ts TIMESTAMP_LTZ(3),
    PRIMARY KEY (order_id) NOT ENFORCED
  ) WITH (
      'connector' = 'elasticsearch-7',
      'hosts' = 'http://localhost:9200',
-     'index' = 'enriched_orders_mongodb'
+     'index' = 'flink_enriched_orders_mongodb'
  );
 
 INSERT INTO enriched_orders_mongodb
-SELECT o.order_id,
+SELECT  o.order_id,
         o.order_date,
         o.customer_id,
         o.price,
         o.product,
-        o.order_status
+        o.order_status,
+        o.db_name,
+        o.collection_name,
+        o.operation_ts
 FROM orders_mongodb AS o;
-
-# MongoDB CDC 导入 kakfa
-
+```
+### MongoDB CDC 导入 kakfa
+```bash
  CREATE TABLE Kafka_Table (
    order_id INT,
    order_date TIMESTAMP_LTZ(3),
@@ -345,16 +361,17 @@ SELECT o.order_id,
         o.product,
         o.order_status
 FROM orders_mongodb AS o;
-
-# MongoDB CDC 导入 console
-
+```
+### MongoDB CDC 导入 console
+```bash
 CREATE TABLE print_table WITH ('connector' = 'print')
 LIKE orders_mongodb (EXCLUDING ALL);
 
 INSERT INTO print_table
 SELECT * FROM orders_mongodb AS o;
-
-# TiDB CDC 导入 Elasticsearch
+```
+### TiDB CDC 导入 Elasticsearch
+```bash
 CREATE TABLE orders_tidb (
    order_id INT,
    order_date TIMESTAMP(3),
@@ -380,15 +397,16 @@ CREATE TABLE enriched_orders_tidb (
  ) WITH (
      'connector' = 'elasticsearch-7',
      'hosts' = 'http://localhost:9200',
-     'index' = 'enriched_orders_tidb'
+     'index' = 'flink_enriched_orders_tidb'
  );
 
 INSERT INTO enriched_orders_tidb
   SELECT o.order_id, o.order_date, o.customer_name, o.order_status
   FROM orders_tidb AS o;
-  
 ```
+
 - mongodb2kafka update操作转为两条kafka数据，先删d,后建c
+- MongoDB CDC 默认为 全量+增量 读取；使用copy.existing=false参数设置为只读增量
 
 ## 测试启动
 ## 报错

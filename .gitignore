@@ -142,5 +142,6 @@ DTS_CDC/debezium/container-images/
 DTS_CDC/debezium/debezium-examples/
 DTS_CDC/debezium/debezium-server*
 DTS_CDC/debezium/debezium
+DTS_CDC/BitSail/bitsail/
 # DB
 test.db
