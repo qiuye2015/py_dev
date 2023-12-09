@@ -29,7 +29,7 @@
 ```bash
 CREATE DATABASE mydb;
 USE mydb;
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
   order_id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
   order_date DATETIME NOT NULL,
   customer_name VARCHAR(255) NOT NULL,
@@ -57,7 +57,7 @@ rs.initiate();
 rs.status();
 
 // 2. switch database
-use mgdb;
+use mydb;
 
 // 3. initialize data
 db.orders.insertMany([
@@ -225,15 +225,18 @@ wget https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-e
 wget https://repo1.maven.org/maven2/com/ververica/flink-sql-connector-mysql-cdc/2.4.2/flink-sql-connector-mysql-cdc-2.4.2.jar
 wget https://repo1.maven.org/maven2/com/ververica/flink-sql-connector-tidb-cdc/2.4.2/flink-sql-connector-tidb-cdc-2.4.2.jar
 wget https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-kafka/1.17.1/flink-sql-connector-kafka-1.17.1.jar
+
+wget https://repo.maven.apache.org/maven2/org/apache/flink/flink-connector-jdbc/3.1.0-1.17/flink-connector-jdbc-3.1.0-1.17.jar
+# wget https://repo.maven.apache.org/maven2/mysql/mysql-connector-java/8.0.19/mysql-connector-java-8.0.19.jar
+wget https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-hive-3.1.3_2.12/1.18.0/flink-sql-connector-hive-3.1.3_2.12-1.18.0.jar
+
 # Starting Flink cluster and Flink SQL CLI
 # export JAVA_HOME=/opt/homebrew/opt/openjdk@11
 ./bin/start-cluster.sh
 # http://localhost:8081/
 ./bin/stop-cluster.sh
-
 #使用下面的命令启动 Flink SQL CLI
 ./bin/sql-client.sh
-
 # 使用 savepoint 停止现有的 Flink 作业。
 ./bin/flink stop $Existing_Flink_JOB_ID
 ```
@@ -244,6 +247,18 @@ wget https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-k
 SET execution.checkpointing.interval = 3s;
 # 设置本地时区为 Asia/Shanghai
 SET table.local-time-zone = Asia/Shanghai;
+
+CREATE CATALOG my_catalog WITH(
+    'type' = 'jdbc',
+    'default-database' = 'mydb',
+    'username' = 'root',
+    'password' = '123456',
+    'base-url' = 'jdbc:mysql://127.0.0.1:33065'
+);
+
+USE CATALOG my_catalog;
+# 建表报错: java.lang.UnsupportedOperationException
+# jdbc catalog不支持建表，只是打通flink和mysql的连接，可以去读写mysql现有的库表 
 
 # MySQL CDC 导入 Elasticsearch
 CREATE TABLE orders (
@@ -263,9 +278,9 @@ CREATE TABLE orders (
    'database-name' = 'mydb',
    'table-name' = 'orders'
  );
+SET pipeline.name= 'mysql-to-es';
 
-
-CREATE TABLE enriched_orders (
+CREATE TABLE flink_orders_mysql (
    order_id INT,
    order_date TIMESTAMP(0),
    customer_name STRING,
@@ -276,10 +291,17 @@ CREATE TABLE enriched_orders (
  ) WITH (
      'connector' = 'elasticsearch-7',
      'hosts' = 'http://localhost:9200',
-     'index' = 'flink_orders'
+     'index' = 'flink_orders_mysql'
  );
 
-INSERT INTO enriched_orders SELECT o.* FROM orders AS o;
+INSERT INTO flink_orders_mysql SELECT o.* FROM orders AS o;
+
+SET state.savepoints.dir='file:/tmp/';
+STOP JOB 'e339219e70ba92fe53a1a33514a7032d' WITH SAVEPOINT;
+SET execution.savepoint.path=file:/tmp/savepoint-e33921-651a309244f6;
+INSERT INTO enriched_orders SELECT o.* FROM orders AS o; # 所有以下DML语句将从指定的保存点路径中恢复
+# 由于指定的保存点路径将影响以下所有 DML 语句，因此您可以使用 RESET 命令重置此配置选项，即禁用从保存点还原
+RESET execution.savepoint.path;
 ```
 
 ### MongoDB CDC 导入 Elasticsearch
@@ -301,11 +323,11 @@ CREATE TABLE orders_mongodb (
    'hosts' = 'localhost:37017',
    'username' = 'fjp',
    'password' = 'fjp',
-   'database' = 'mgdb',
+   'database' = 'mydb',
    'collection' = 'orders'
  );
 
- CREATE TABLE enriched_orders_mongodb (
+ CREATE TABLE sink_orders_mongodb (
    order_id INT,
    order_date TIMESTAMP_LTZ(3),
    customer_id INT,
@@ -319,10 +341,10 @@ CREATE TABLE orders_mongodb (
  ) WITH (
      'connector' = 'elasticsearch-7',
      'hosts' = 'http://localhost:9200',
-     'index' = 'flink_enriched_orders_mongodb'
+     'index' = 'flink_orders_mongodb'
  );
 
-INSERT INTO enriched_orders_mongodb
+INSERT INTO sink_orders_mongodb
 SELECT  o.order_id,
         o.order_date,
         o.customer_id,
@@ -409,6 +431,57 @@ INSERT INTO enriched_orders_tidb
 - MongoDB CDC 默认为 全量+增量 读取；使用copy.existing=false参数设置为只读增量
 
 ## 测试启动
+### 准备
+```bash
+SET "execution.checkpointing.interval" = "4s";
+SET "table.local-time-zone" = "Asia/Shanghai";
+SET "sql-client.execution.result-mode" = "tableau";
+CREATE CATALOG fjp_catalog WITH(
+    'type' = 'jdbc',
+    'default-database' = 'mydb',
+    'username' = 'root',
+    'password' = '123456',
+    'base-url' = 'jdbc:mysql://127.0.0.1:33065'
+);
+```
+### mysql2es
+```bash
+SET pipeline.name= 'mysql-to-es' ;
+
+CREATE TABLE source_mysql_orders (
+    PRIMARY KEY (order_id) NOT ENFORCED
+)
+WITH (
+   'connector' = 'mysql-cdc',
+   'hostname' = 'localhost',
+   'port' = '33065',
+   'username' = 'root',
+   'password' = '123456',
+   'database-name' = 'mydb',
+   'table-name' = 'orders',
+   'scan.startup.mode' = 'initial',
+   'server-time-zone' = 'Asia/Shanghai'
+)
+LIKE  fjp_catalog.mydb.orders (EXCLUDING ALL);
+
+CREATE TABLE sink_mysql_es_orders  WITH (
+     'connector' = 'elasticsearch-7',
+     'hosts' = 'http://localhost:9200',
+     'index' = 'flink_sink_mysql_es_orders'
+)
+LIKE  fjp_catalog.mydb.orders (EXCLUDING ALL);
+
+INSERT INTO sink_mysql_es_orders SELECT o.* FROM source_mysql_orders AS o;
+```
+
+### mongodb2es
+```bash
+
+```
+
+### tidb2es
+```bash
+```
 ## 报错
 
 # BitSail

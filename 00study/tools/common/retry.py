@@ -1,9 +1,11 @@
+import functools
 import time
 
 
 # 装饰器模块，需要传入参数(重试次数, 重试间隔/second)
 def retry(retry_times=2, retry_interval=0):
     def decorator(func):
+        @functools.wraps(func)
         def wrapper(*args, **kwargs):
             retried = 0
             while retried <= retry_times:
@@ -28,4 +30,6 @@ def func_test(msg):
 
 
 if __name__ == '__main__':
-    func_test("fjp test")
+    # func_test("fjp test")
+    # 获取被装饰器修饰过的函数的函数名
+    print(func_test.__name__)

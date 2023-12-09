@@ -100,7 +100,7 @@ def deprecated(func):
     import warnings
 
     def wrapper(*args, **kwargs):
-        warnings.warn(f"{func.__name__} is deprecated and will be removed in future versions.",DeprecationWarning)
+        warnings.warn(f"{func.__name__} is deprecated and will be removed in future versions.", DeprecationWarning)
         return func(*args, **kwargs)
 
     return wrapper
@@ -196,6 +196,30 @@ def old_data_processing(data):
     pass
 
 
+def rate_limit(fn):
+    """
+    限制函数被执行的频率，比如10秒一次
+    """
+    start = 0  # 上一次访问的时间
+
+    def inner(*args, **kwargs):
+        nonlocal start
+        now = time.time()
+        if now - start > 10:
+            ret = fn(*args, **kwargs)
+            start = now
+            return ret
+        else:
+            print(f"访问过于频繁,请于{int(10 - (now - start))}之后访问")
+
+    return inner
+
+
+@rate_limit
+def rate_limit_demo():
+    print("visit rate_limit_demo")
+
+
 if __name__ == "__main__":
     # my_data_processing_function()
     # print(fibonacci(30))
@@ -203,4 +227,8 @@ if __name__ == "__main__":
     # preprocess_data("test error")
     # fetch_data_from_api("wwww")
     # complex_data_processing("test")
-    old_data_processing("test")
+    # old_data_processing("test")
+
+    rate_limit_demo()
+    time.sleep(4)
+    rate_limit_demo()

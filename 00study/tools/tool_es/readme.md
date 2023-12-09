@@ -107,3 +107,13 @@ curl -XGET "http://localhost:9200/test_fjp_bulk_create/_search?pretty" -H 'Conte
 curl -XPUT "http://localhost:9200/test_fjp_bulk_create/_settings?pretty" -H 'Content-Type: application/json' -d'{   "index.max_result_window" :"5"}'
 curl -XGET "http://localhost:9200/test_fjp_bulk_create/_settings/index.max_result_window?pretty"
 ```
+
+# culster API
+```bash
+# 查看集群settings
+curl --location --request GET 'http://127.0.0.1:9200/_cluster/settings?pretty'
+
+curl -XPUT "http://localhost:9200/_all/_settings?pretty" -H 'Content-Type: application/json' -d'{   "index.blocks.read_only_allow_delete" : null}'
+
+
+```
