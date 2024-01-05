@@ -221,14 +221,17 @@ wget "https://mirrors.tuna.tsinghua.edu.cn/apache/flink/flink-${version}/flink-$
 tar -xzvf "flink-${version}-bin-scala_2.12.tgz"
 cd "flink-${version}/lib"
 
-wget https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-elasticsearch7/3.0.1-1.17/flink-sql-connector-elasticsearch7-3.0.1-1.17.jar
-wget https://repo1.maven.org/maven2/com/ververica/flink-sql-connector-mysql-cdc/2.4.2/flink-sql-connector-mysql-cdc-2.4.2.jar
-wget https://repo1.maven.org/maven2/com/ververica/flink-sql-connector-tidb-cdc/2.4.2/flink-sql-connector-tidb-cdc-2.4.2.jar
 wget https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-kafka/1.17.1/flink-sql-connector-kafka-1.17.1.jar
+wget https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-elasticsearch7/3.0.1-1.17/flink-sql-connector-elasticsearch7-3.0.1-1.17.jar
 
 wget https://repo.maven.apache.org/maven2/org/apache/flink/flink-connector-jdbc/3.1.0-1.17/flink-connector-jdbc-3.1.0-1.17.jar
-# wget https://repo.maven.apache.org/maven2/mysql/mysql-connector-java/8.0.19/mysql-connector-java-8.0.19.jar
 wget https://repo.maven.apache.org/maven2/org/apache/flink/flink-sql-connector-hive-3.1.3_2.12/1.18.0/flink-sql-connector-hive-3.1.3_2.12-1.18.0.jar
+
+
+wget https://repo1.maven.org/maven2/com/ververica/flink-sql-connector-mysql-cdc/2.4.2/flink-sql-connector-mysql-cdc-2.4.2.jar
+wget https://repo1.maven.org/maven2/com/ververica/flink-sql-connector-tidb-cdc/2.4.2/flink-sql-connector-tidb-cdc-2.4.2.jar
+
+# wget https://repo.maven.apache.org/maven2/mysql/mysql-connector-java/8.0.19/mysql-connector-java-8.0.19.jar
 
 # Starting Flink cluster and Flink SQL CLI
 # export JAVA_HOME=/opt/homebrew/opt/openjdk@11
@@ -482,7 +485,28 @@ INSERT INTO sink_mysql_es_orders SELECT o.* FROM source_mysql_orders AS o;
 ### tidb2es
 ```bash
 ```
+
+## Schema Changes
+### Column Rename
+renaming a column (fname to first_name) in the source table
+```bash
+# 1. Stop the Flink job with a savepoint:
+SET 'state.savepoints.dir' = '/tmp/savepoints';
+STOP JOB '<id>' WITH SAVEPOINT;
+# 2. Rename the fname column:
+UPDATE customers SET fname = 'Brandon Junior' WHERE id = 1001;
+ALTER TABLE customers RENAME COLUMN fname TO first_name
+UPDATE customers SET first_name = 'Brandon III' WHERE id = 1001;
+# 3. In Flink, add the first_name column and configure the savepoint path:
+ALTER TABLE customers ADD first_name STRING;
+SET 'execution.savepoint.path' = '/tmp/savepoints/savepoint-<job id>';
+# 4. Deploy a new version of the job, retrieving the first name either from the fname or first_name column, depending on which one is present:
+INSERT INTO customers_public SELECT * FROM customers;
+```
+
+
 ## 报错
+- mysql-cdc 如果希望彻底跳过锁（对数据的一致性要求不高，但要求数据库不能被锁），则可以在 WITH 参数中设置 'debezium.snapshot.locking.mode' = 'none' 参数来跳过锁操作
 
 # BitSail
 ## install
@@ -695,3 +719,12 @@ db.customers.remove(
 
 docker compose -f docker-compose-mongodb2es.yaml down
 ```
+
+# TiCDC
+## intall
+
+## demo启动
+
+## 测试启动
+
+## 报错

@@ -214,7 +214,7 @@ rest.bind-address: localhost
 # Flag to specify whether job submission is enabled from the web-based
 # runtime monitor. Uncomment to disable.
 
-#web.submit.enable: false
+web.submit.enable: false
 
 # Flag to specify whether job cancellation is enabled from the web-based
 # runtime monitor. Uncomment to disable.

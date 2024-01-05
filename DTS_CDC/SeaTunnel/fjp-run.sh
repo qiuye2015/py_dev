@@ -1,4 +1,4 @@
-export JAVA_HOME=/opt/homebrew/opt/openjdk@11
+# export JAVA_HOME=/opt/homebrew/opt/openjdk@11
 # local
 # cd apache-seatunnel-2.3.3 && sh ./bin/seatunnel.sh -e local --config ../mysql2kafka.config
 # cd apache-seatunnel-2.3.3 && sh ./bin/seatunnel.sh -e local --config ../mysql2es.config

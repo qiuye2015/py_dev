@@ -143,5 +143,14 @@ DTS_CDC/debezium/debezium-examples/
 DTS_CDC/debezium/debezium-server*
 DTS_CDC/debezium/debezium
 DTS_CDC/BitSail/bitsail/
+DTS_CDC/flink-cdc/flink-1.17.*
+DTS_CDC/flink-cdc/flink-cdc*
+DTS_CDC/flink-cdc/flink-playgrounds/
+DTS_CDC/flink-cdc/flink/
+DTS_CDC/SeaTunnel/opt/
+DTS_CDC/SeaTunnel/seatunnel/
 # DB
 test.db
+
+sync-diff-about-db-es.py
+db2es-diff-monitor.py
