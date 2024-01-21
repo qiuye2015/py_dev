@@ -209,3 +209,8 @@ if __name__ == '__main__':
     # logger.info("test")
     # logger.error("Debug error:", exc_info=True)
     # logger.opt(exception=True).debug("Debug error:")
+
+
+
+# LOGURU_FORMAT=
+# <green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green>_{level}_<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan>|   <level>{message}</level>

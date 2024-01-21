@@ -1,3 +1,5 @@
+from functools import wraps
+from threading import RLock
 import time
 
 
@@ -12,6 +14,40 @@ def timer(func):
         return result
 
     return wrapper
+
+
+# 如果装饰器不希望跟print函数耦合，可以编写可以参数化的装饰器
+def record(output):
+    """可以参数化的装饰器"""
+
+    def decorate(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            start = time()
+            result = func(*args, **kwargs)
+            output(func.__name__, time() - start)
+            return result
+
+        return wrapper
+
+    return decorate
+
+
+class Record():
+    """通过定义类的方式定义装饰器"""
+
+    def __init__(self, output):
+        self.output = output
+
+    def __call__(self, func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            start = time()
+            result = func(*args, **kwargs)
+            self.output(func.__name__, time() - start)
+            return result
+
+        return wrapper
 
 
 def log_results(func):
@@ -218,6 +254,43 @@ def rate_limit(fn):
 @rate_limit
 def rate_limit_demo():
     print("visit rate_limit_demo")
+
+
+# 用装饰器来实现单例模式
+def singleton(cls):
+    """装饰类的装饰器"""
+    instances = {}
+
+    @wraps(cls)
+    def wrapper(*args, **kwargs):
+        if cls not in instances:
+            instances[cls] = cls(*args, **kwargs)
+        return instances[cls]
+
+    return wrapper
+
+
+# 线程安全的单例装饰器
+def singleton(cls):
+    """线程安全的单例装饰器"""
+    instances = {}
+    locker = RLock()
+
+    @wraps(cls)
+    def wrapper(*args, **kwargs):
+        if cls not in instances:
+            with locker:
+                if cls not in instances:
+                    instances[cls] = cls(*args, **kwargs)
+        return instances[cls]
+
+    return wrapper
+
+
+@singleton
+class President:
+    """总统(单例类)"""
+    pass
 
 
 if __name__ == "__main__":
