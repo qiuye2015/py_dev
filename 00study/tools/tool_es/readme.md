@@ -106,6 +106,8 @@ curl -XGET "http://localhost:9200/test_fjp_bulk_create/_search?pretty" -H 'Conte
 # 参数index.max_result_window主要用来限制单次查询满足查询条件的结果窗口的大小
 curl -XPUT "http://localhost:9200/test_fjp_bulk_create/_settings?pretty" -H 'Content-Type: application/json' -d'{   "index.max_result_window" :"5"}'
 curl -XGET "http://localhost:9200/test_fjp_bulk_create/_settings/index.max_result_window?pretty"
+# 查看文档数量
+curl -H 'Accept: application/json' "http://localhost:9200/_cat/count/fjp_dlb_geofence_v1"
 ```
 
 # culster API

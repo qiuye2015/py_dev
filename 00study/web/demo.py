@@ -104,9 +104,7 @@ def get_data():
 
 @app.route("/index")
 def hello():
-
     app.logger.info("A user visited the home page >>> %s", session["ctx"])
-
     app.logger.debug("A debug message")
     return "Hello, World!"
 
